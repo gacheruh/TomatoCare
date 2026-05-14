@@ -1,6 +1,7 @@
 name: Keep Supabase Alive
 on:
   schedule:
+    # Runs 4 times a day (every 6 hours) at 01 minute past the hour (UTC)
     - cron: '01 0,6,12,18 * * *' 
   workflow_dispatch: # Allows manual run for testing
 
@@ -14,10 +15,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
       
       - name: Install dependencies
-        run: npm install @supabase/supabase-js
+        # Added 'ws' to the install command
+        run: npm install @supabase/supabase-js ws
         
       - name: Ping Supabase Database
         env:
@@ -26,11 +28,25 @@ jobs:
         run: |
           node -e "
             const { createClient } = require('@supabase/supabase-js');
-            const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+            const WebSocket = require('ws');
+
+            // Initialize client with the WebSocket transport provided explicitly
+            const supabase = createClient(
+              process.env.SUPABASE_URL, 
+              process.env.SUPABASE_KEY,
+              {
+                realtime: {
+                  transport: WebSocket,
+                },
+              }
+            );
+
             console.log('Attempting to ping Supabase...');
+            
+            // This query performs actual database activity
             supabase.from('profiles').select('id').limit(1).then(res => {
               if (res.error) throw res.error;
-              console.log('Supabase ping successful!');
+              console.log('Supabase ping successful! Connection verified.');
             }).catch(error => {
               console.error('Supabase ping failed:', error);
               process.exit(1);
