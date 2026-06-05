@@ -1,15 +1,43 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { SendHorizontal, Bot, User, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+interface ChatMessage {
+    role: string;
+    content: string;
+}
+
+// Memoized individual message component to avoid re-rendering all messages on input change
+const ChatBubble = memo(function ChatBubble({ msg }: { msg: ChatMessage }) {
+    return (
+        <div
+            className={`flex items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+        >
+            <div className={`p-2 rounded-full flex-shrink-0 ${msg.role === 'user' ? 'bg-green-600 text-white' : 'bg-white border border-gray-200 text-green-600'
+                }`}>
+                {msg.role === 'user' ? <User className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
+            </div>
+            <div className={`p-3 rounded-2xl max-w-[80%] text-sm ${msg.role === 'user'
+                ? 'bg-green-600 text-white rounded-tr-none'
+                : 'bg-white border border-gray-200 text-gray-800 rounded-tl-none shadow-sm'
+                }`}>
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {msg.content}
+                    </ReactMarkdown>
+                </div>
+            </div>
+        </div>
+    );
+});
+
 export default function AssistantPage() {
-    const [messages, setMessages] = useState<{ role: string; content: string }[]>([
+    const [messages, setMessages] = useState<ChatMessage[]>([
         { role: 'assistant', content: 'Hello! I am your AgriDiagnose assistant. Ask me anything about your crops, diseases, or farming tips.' }
     ]);
     const [input, setInput] = useState('');
@@ -17,9 +45,9 @@ export default function AssistantPage() {
     const [isLoaded, setIsLoaded] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const scrollToBottom = () => {
+    const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
+    }, []);
 
     // Load messages from localStorage on mount
     useEffect(() => {
@@ -34,15 +62,15 @@ export default function AssistantPage() {
         setIsLoaded(true);
     }, []);
 
-    // Save messages to localStorage whenever they change
+    // Save messages to localStorage whenever they change (not on input change)
     useEffect(() => {
         if (isLoaded) {
             localStorage.setItem('chatHistory', JSON.stringify(messages));
         }
         scrollToBottom();
-    }, [messages, isLoaded]);
+    }, [messages, isLoaded, scrollToBottom]);
 
-    const handleSend = async (e: React.FormEvent) => {
+    const handleSend = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim()) return;
 
@@ -77,7 +105,7 @@ export default function AssistantPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [input, messages]);
 
     return (
         <div className="max-w-3xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
@@ -90,25 +118,7 @@ export default function AssistantPage() {
                 {/* Chat Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
                     {messages.map((msg, i) => (
-                        <div
-                            key={i}
-                            className={`flex items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
-                        >
-                            <div className={`p-2 rounded-full flex-shrink-0 ${msg.role === 'user' ? 'bg-green-600 text-white' : 'bg-white border border-gray-200 text-green-600'
-                                }`}>
-                                {msg.role === 'user' ? <User className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
-                            </div>
-                            <div className={`p-3 rounded-2xl max-w-[80%] text-sm ${msg.role === 'user'
-                                ? 'bg-green-600 text-white rounded-tr-none'
-                                : 'bg-white border border-gray-200 text-gray-800 rounded-tl-none shadow-sm'
-                                }`}>
-                                <div className="prose prose-sm max-w-none dark:prose-invert">
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                        {msg.content}
-                                    </ReactMarkdown>
-                                </div>
-                            </div>
-                        </div>
+                        <ChatBubble key={i} msg={msg} />
                     ))}
                     {isLoading && (
                         <div className="flex items-start gap-3">
@@ -130,11 +140,12 @@ export default function AssistantPage() {
                 {/* Input Area */}
                 <div className="p-4 bg-white border-t border-gray-200">
                     <form onSubmit={handleSend} className="flex gap-2">
-                        <Input
+                        <input
+                            type="text"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
-                            placeholder="Ask about maize pests, fertilizer..."
-                            className="flex-1"
+                            placeholder="Ask about Tomatoes, Early Blight, Late Blight..."
+                            className="flex-1 h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={isLoading}
                         />
                         <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={isLoading || !input.trim()}>

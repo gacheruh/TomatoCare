@@ -196,31 +196,33 @@ export default function DashboardPage() {
                         {recentActivity.length > 0 ? (
                             <div className="divide-y divide-gray-100">
                                 {recentActivity.map((activity, i) => (
-                                    <div key={i} className="flex items-center gap-4 p-4 hover:bg-gray-50">
-                                        <div className="h-12 w-12 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
-                                            {activity.image_url ? (
-                                                <img src={activity.image_url} alt="Scan" className="h-full w-full object-cover" />
-                                            ) : (
-                                                <div className="h-full w-full flex items-center justify-center bg-gray-100 text-gray-400">
-                                                    <Scan className="h-6 w-6" />
-                                                </div>
-                                            )}
+                                    <Link key={i} href={`/report/${activity.id}`} className="block">
+                                        <div className="flex items-center gap-4 p-4 hover:bg-gray-50 cursor-pointer transition-colors">
+                                            <div className="h-12 w-12 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
+                                                {activity.image_url ? (
+                                                    <img src={activity.image_url} alt="Scan" className="h-full w-full object-cover" />
+                                                ) : (
+                                                    <div className="h-full w-full flex items-center justify-center bg-gray-100 text-gray-400">
+                                                        <Scan className="h-6 w-6" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 truncate">
+                                                    {activity.disease_name}
+                                                </p>
+                                                <p className="text-sm text-gray-500 truncate">
+                                                    {new Date(activity.created_at).toLocaleDateString()} • {new Date(activity.created_at).toLocaleTimeString()}
+                                                </p>
+                                            </div>
+                                            <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${activity.disease_name.toLowerCase().includes('healthy')
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-red-100 text-red-800'
+                                                }`}>
+                                                {activity.disease_name.toLowerCase().includes('healthy') ? 'Healthy' : 'Action Needed'}
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 truncate">
-                                                {activity.disease_name}
-                                            </p>
-                                            <p className="text-sm text-gray-500 truncate">
-                                                {new Date(activity.created_at).toLocaleDateString()} • {new Date(activity.created_at).toLocaleTimeString()}
-                                            </p>
-                                        </div>
-                                        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${activity.disease_name.toLowerCase().includes('healthy')
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
-                                            }`}>
-                                            {activity.disease_name.toLowerCase().includes('healthy') ? 'Healthy' : 'Action Needed'}
-                                        </div>
-                                    </div>
+                                    </Link>
                                 ))}
                             </div>
                         ) : (

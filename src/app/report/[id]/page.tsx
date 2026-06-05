@@ -87,11 +87,41 @@ export default function ReportPage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" className="gap-2">
+                    <Button
+                        variant="outline"
+                        className="gap-2"
+                        onClick={async () => {
+                            const shareData = {
+                                title: `Diagnosis Report: ${report.disease_name}`,
+                                text: `AgriDiagnose Report — ${report.disease_name} (${Math.round(report.confidence * 100)}% confidence). Diagnosed on ${new Date(report.created_at).toLocaleDateString()}.`,
+                                url: window.location.href,
+                            };
+                            try {
+                                if (navigator.share) {
+                                    await navigator.share(shareData);
+                                } else {
+                                    await navigator.clipboard.writeText(window.location.href);
+                                    alert('Report link copied to clipboard!');
+                                }
+                            } catch (err) {
+                                // User cancelled share or error
+                                if ((err as Error).name !== 'AbortError') {
+                                    await navigator.clipboard.writeText(window.location.href);
+                                    alert('Report link copied to clipboard!');
+                                }
+                            }
+                        }}
+                    >
                         <Share2 className="h-4 w-4" />
                         Share
                     </Button>
-                    <Button variant="outline" className="gap-2">
+                    <Button
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => {
+                            window.print();
+                        }}
+                    >
                         <Download className="h-4 w-4" />
                         PDF
                     </Button>
