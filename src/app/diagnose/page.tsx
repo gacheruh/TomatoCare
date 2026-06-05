@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
-import { UploadCloud, Camera, Loader2, AlertCircle, CheckCircle, X, Scan } from 'lucide-react';
+import { UploadCloud, Camera, Loader2, AlertCircle, CheckCircle, X, Scan, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,7 @@ export default function DiagnosePage() {
     const [file, setFile] = useState<File | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [result, setResult] = useState<any | null>(null);
+    const [lang, setLang] = useState<'en' | 'sw'>('en');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,49 +203,85 @@ export default function DiagnosePage() {
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2 text-amber-800">
                                         <AlertCircle className="h-6 w-6" />
-                                        Image Not Recognized
+                                        {lang === 'en' ? 'Image Not Recognized' : 'Picha Haijatambuliwa'}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    <p className="text-sm text-amber-900">{result.symptoms}</p>
+                                    <p className="text-sm text-amber-900">
+                                        {lang === 'sw' && result.symptoms_sw ? result.symptoms_sw : result.symptoms}
+                                    </p>
                                     <div>
-                                        <h3 className="font-semibold text-gray-900 mb-1">Tips for Best Results</h3>
-                                        <p className="text-sm text-gray-700">{result.prevention}</p>
+                                        <h3 className="font-semibold text-gray-900 mb-1">
+                                            {lang === 'en' ? 'Tips for Best Results' : 'Vidokezo vya Matokeo Bora'}
+                                        </h3>
+                                        <p className="text-sm text-gray-700">
+                                            {lang === 'sw' && result.prevention_sw ? result.prevention_sw : result.prevention}
+                                        </p>
                                     </div>
                                 </CardContent>
                             </Card>
                         ) : (
                             /* ── Valid diagnosis: green success card ── */
-                            <Card className="border-green-200 bg-green-50/50">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2 text-green-800">
-                                        <CheckCircle className="h-6 w-6" />
-                                        Diagnosis Complete
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div>
-                                        <h3 className="font-semibold text-gray-900">Disease Detected</h3>
-                                        <p className="text-lg text-green-700 font-bold">{result.diseaseName}</p>
-                                        <p className="text-sm text-gray-500">Confidence: {result.confidence}%</p>
-                                    </div>
+                            <>
+                                {/* Language toggle */}
+                                <div className="flex justify-end">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setLang(lang === 'en' ? 'sw' : 'en')}
+                                        className="flex items-center gap-2 text-sm"
+                                    >
+                                        <Globe className="h-4 w-4" />
+                                        {lang === 'en' ? 'Swahili' : 'English'}
+                                    </Button>
+                                </div>
+                                <Card className="border-green-200 bg-green-50/50">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2 text-green-800">
+                                            <CheckCircle className="h-6 w-6" />
+                                            {lang === 'en' ? 'Diagnosis Complete' : 'Uchunguzi Umekamilika'}
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900">
+                                                {lang === 'en' ? 'Disease Detected' : 'Ugonjwa Uliogunduliwa'}
+                                            </h3>
+                                            <p className="text-lg text-green-700 font-bold">{result.diseaseName}</p>
+                                            <p className="text-sm text-gray-500">
+                                                {lang === 'en' ? 'Confidence' : 'Uhakika'}: {result.confidence}%
+                                            </p>
+                                        </div>
 
-                                    <div>
-                                        <h3 className="font-semibold text-gray-900 mb-1">Symptoms</h3>
-                                        <p className="text-sm text-gray-700">{result.symptoms}</p>
-                                    </div>
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900 mb-1">
+                                                {lang === 'en' ? 'Symptoms' : 'Dalili'}
+                                            </h3>
+                                            <p className="text-sm text-gray-700">
+                                                {lang === 'sw' && result.symptoms_sw ? result.symptoms_sw : result.symptoms}
+                                            </p>
+                                        </div>
 
-                                    <div>
-                                        <h3 className="font-semibold text-gray-900 mb-1">Recommended Treatment</h3>
-                                        <p className="text-sm text-gray-700">{result.treatment}</p>
-                                    </div>
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900 mb-1">
+                                                {lang === 'en' ? 'Recommended Treatment' : 'Matibabu Yanayopendekezwa'}
+                                            </h3>
+                                            <p className="text-sm text-gray-700">
+                                                {lang === 'sw' && result.treatment_sw ? result.treatment_sw : result.treatment}
+                                            </p>
+                                        </div>
 
-                                    <div>
-                                        <h3 className="font-semibold text-gray-900 mb-1">Prevention</h3>
-                                        <p className="text-sm text-gray-700">{result.prevention}</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900 mb-1">
+                                                {lang === 'en' ? 'Prevention' : 'Kinga'}
+                                            </h3>
+                                            <p className="text-sm text-gray-700">
+                                                {lang === 'sw' && result.prevention_sw ? result.prevention_sw : result.prevention}
+                                            </p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </>
                         )
                     ) : (
                         <Card className="h-full flex items-center justify-center min-h-[300px] bg-gray-50 border-dashed">

@@ -97,6 +97,9 @@ interface GeminiValidation {
   symptoms?: string;
   treatment?: string;
   prevention?: string;
+  symptoms_sw?: string;
+  treatment_sw?: string;
+  prevention_sw?: string;
 }
 
 async function validateWithGemini(base64Data: string, cnnPrediction?: string): Promise<GeminiValidation | null> {
@@ -113,17 +116,21 @@ Analyze this image and respond with ONLY valid JSON (no markdown, no code fences
   "verdict": "agree" | "corrected" | "not_tomato",
   "correctedDisease": "disease name if verdict is corrected",
   "confidence": 85,
-  "symptoms": "visible symptoms description",
-  "treatment": "recommended treatment",
-  "prevention": "prevention tips"
+  "symptoms": "visible symptoms description in English",
+  "treatment": "recommended treatment in English",
+  "prevention": "prevention tips in English",
+  "symptoms_sw": "visible symptoms description in Swahili",
+  "treatment_sw": "recommended treatment in Swahili",
+  "prevention_sw": "prevention tips in Swahili"
 }
 
 Rules:
 - If the image is NOT a tomato/plant leaf (e.g. a rock, animal, person, object, non-plant), set verdict to "not_tomato"
-- If the prediction is correct, set verdict to "agree" (you can omit correctedDisease, symptoms, treatment, prevention)
-- If the prediction is wrong, set verdict to "corrected" and provide the correct disease name and full details
+- If the prediction is correct, set verdict to "agree" and STILL provide symptoms, treatment, prevention, and their Swahili translations (_sw fields)
+- If the prediction is wrong, set verdict to "corrected" and provide the correct disease name with full details in both languages
 - Known tomato diseases: ${KNOWN_DISEASES.join(', ')}
-- For healthy tomato leaves, use disease name "healthy"`;
+- For healthy tomato leaves, use disease name "healthy"
+- ALL responses MUST include both English and Swahili (_sw) fields for symptoms, treatment, and prevention`;
 
   // 10-second timeout — if Gemini is slow, we'll trust the CNN
   const controller = new AbortController();
@@ -215,13 +222,16 @@ export async function POST(req: NextRequest) {
         symptoms: 'The uploaded image does not appear to be a tomato plant leaf. Please upload a clear photo of a tomato leaf for accurate diagnosis.',
         treatment: 'N/A',
         prevention: 'Ensure you photograph the affected tomato leaf clearly, with good lighting and minimal background clutter.',
+        symptoms_sw: 'Picha iliyopakiwa haionekani kuwa jani la mmea wa nyanya. Tafadhali pakia picha wazi ya jani la nyanya kwa uchunguzi sahihi.',
+        treatment_sw: 'Haihusiki',
+        prevention_sw: 'Hakikisha unapiga picha ya jani la nyanya lililoathirika kwa uwazi, na mwanga mzuri.',
         isRejection: true,
       });
     }
 
     // Case 2: CNN succeeded
     if (cnn) {
-      // Case 2a: Gemini agrees with CNN → use CNN + advisory database
+      // Case 2a: Gemini agrees with CNN → use CNN + advisory database + Gemini Swahili
       if (gemini?.verdict === 'agree') {
         console.log(`[Pipeline] Result: CNN CONFIRMED by Gemini → "${cnn.diseaseName}"`);
         const advisory = ADVISORY_DATABASE[cnn.diseaseName] || ADVISORY_DATABASE['healthy'];
@@ -231,13 +241,15 @@ export async function POST(req: NextRequest) {
           symptoms: advisory.symptoms,
           treatment: advisory.treatment,
           prevention: advisory.prevention,
+          symptoms_sw: gemini.symptoms_sw || '',
+          treatment_sw: gemini.treatment_sw || '',
+          prevention_sw: gemini.prevention_sw || '',
         });
       }
 
-      // Case 2b: Gemini corrects CNN → use Gemini's diagnosis
+      // Case 2b: Gemini corrects CNN → use Gemini's diagnosis (both languages)
       if (gemini?.verdict === 'corrected' && gemini.correctedDisease) {
         console.log(`[Pipeline] Result: GEMINI CORRECTED CNN → "${gemini.correctedDisease}" (was "${cnn.diseaseName}")`);
-        // Try advisory database first for the corrected disease, fall back to Gemini's text
         const advisory = ADVISORY_DATABASE[gemini.correctedDisease];
         return NextResponse.json({
           diseaseName: gemini.correctedDisease,
@@ -245,18 +257,26 @@ export async function POST(req: NextRequest) {
           symptoms: advisory?.symptoms || gemini.symptoms || 'See a local agronomist for detailed symptom analysis.',
           treatment: advisory?.treatment || gemini.treatment || 'Consult a local agricultural extension officer for treatment options.',
           prevention: advisory?.prevention || gemini.prevention || 'Practice good crop hygiene and regular monitoring.',
+          symptoms_sw: gemini.symptoms_sw || '',
+          treatment_sw: gemini.treatment_sw || '',
+          prevention_sw: gemini.prevention_sw || '',
         });
       }
 
-      // Case 2c: Gemini failed or was inconclusive → trust CNN at 98% accuracy
+      // Case 2c: Gemini failed or was inconclusive → trust CNN, translate advisory async
       console.log(`[Pipeline] Result: CNN TRUSTED (Gemini unavailable) → "${cnn.diseaseName}"`);
       const advisory = ADVISORY_DATABASE[cnn.diseaseName] || ADVISORY_DATABASE['healthy'];
+      // Try a quick Swahili translation since Gemini validation failed
+      const swahili = await translateToSwahili(advisory.symptoms, advisory.treatment, advisory.prevention);
       return NextResponse.json({
         diseaseName: cnn.diseaseName,
         confidence: cnn.confidence,
         symptoms: advisory.symptoms,
         treatment: advisory.treatment,
         prevention: advisory.prevention,
+        symptoms_sw: swahili?.symptoms_sw || '',
+        treatment_sw: swahili?.treatment_sw || '',
+        prevention_sw: swahili?.prevention_sw || '',
       });
     }
 
@@ -282,6 +302,32 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// ─── Helper: Translate advisory text to Swahili (for CNN-only fallback) ─────
+async function translateToSwahili(symptoms: string, treatment: string, prevention: string): Promise<{ symptoms_sw: string; treatment_sw: string; prevention_sw: string } | null> {
+  try {
+    const prompt = `Translate the following agricultural advisory text to Swahili. Respond with ONLY valid JSON (no markdown, no code fences):
+{
+  "symptoms_sw": "Swahili translation of symptoms",
+  "treatment_sw": "Swahili translation of treatment",
+  "prevention_sw": "Swahili translation of prevention"
+}
+
+English text to translate:
+Symptoms: ${symptoms}
+Treatment: ${treatment}
+Prevention: ${prevention}`;
+
+    const model = genAI.getGenerativeModel({ model: MODEL_NAMES[0] });
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    return JSON.parse(cleanText);
+  } catch (err: any) {
+    console.warn('[Translator] Swahili translation failed:', err.message || err);
+    return null;
+  }
+}
+
 // ─── Full Gemini fallback (when CNN is completely unavailable) ───────────────
 async function runFullGeminiFallback(base64Data: string): Promise<NextResponse> {
   console.log('[Gemini Fallback] Running full diagnosis...');
@@ -291,9 +337,12 @@ async function runFullGeminiFallback(base64Data: string): Promise<NextResponse> 
     {
       "diseaseName": "Name of the disease or 'Healthy'",
       "confidence": "Confidence score as a percentage (number only)",
-      "symptoms": "Brief summary of visible symptoms",
-      "treatment": "Recommended chemical and organic treatments",
-      "prevention": "Tips to prevent future occurrence"
+      "symptoms": "Brief summary of visible symptoms in English",
+      "treatment": "Recommended chemical and organic treatments in English",
+      "prevention": "Tips to prevent future occurrence in English",
+      "symptoms_sw": "Brief summary of visible symptoms in Swahili",
+      "treatment_sw": "Recommended chemical and organic treatments in Swahili",
+      "prevention_sw": "Tips to prevent future occurrence in Swahili"
     }
   `;
 
