@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { genAI, MODEL_NAME } from '@/lib/gemini';
+import { genAI, MODEL_NAMES } from '@/lib/gemini';
 
 export async function POST(req: NextRequest) {
     try {
@@ -9,20 +9,36 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'No message provided' }, { status: 400 });
         }
 
-        // Use the shared model name
-        const model = genAI.getGenerativeModel({
-            model: MODEL_NAME,
-            systemInstruction: "You are AgriDiagnose Assistant, an expert AI agronomist. Your goal is to help farmers diagnose crop diseases, suggest treatments, and provide farming advice. Be helpful, concise, and use markdown formatting (bold, lists) to make your answers easy to read. If you don't know the answer, admit it and suggest consulting a local expert."
-        });
+        let result;
+        let lastError;
 
-        const chat = model.startChat({
-            history: history || [],
-            generationConfig: {
-                maxOutputTokens: 2000, // Increased to prevent cut-offs
-            },
-        });
+        for (const modelName of MODEL_NAMES) {
+            try {
+                console.log(`Chat API: trying model ${modelName}`);
+                const model = genAI.getGenerativeModel({
+                    model: modelName,
+                    systemInstruction: "You are AgriDiagnose Assistant, an expert AI agronomist. Your goal is to help farmers diagnose crop diseases, suggest treatments, and provide farming advice. Be helpful, concise, and use markdown formatting (bold, lists) to make your answers easy to read. If you don't know the answer, admit it and suggest consulting a local expert."
+                });
 
-        const result = await chat.sendMessage(message);
+                const chat = model.startChat({
+                    history: history || [],
+                    generationConfig: {
+                        maxOutputTokens: 2000, // Increased to prevent cut-offs
+                    },
+                });
+
+                result = await chat.sendMessage(message);
+                break; // Succeeded!
+            } catch (err: any) {
+                console.warn(`Chat API: model ${modelName} failed, trying fallback. Error:`, err.message || err);
+                lastError = err;
+            }
+        }
+
+        if (!result) {
+            throw lastError || new Error("All chat models failed");
+        }
+
         const response = await result.response;
         const text = response.text();
 

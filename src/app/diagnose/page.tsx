@@ -34,7 +34,7 @@ export default function DiagnosePage() {
 
         setIsAnalyzing(true);
         try {
-            // 1. Analyze with Gemini API
+            // 1. Analyze with AI diagnosis pipeline
             const response = await fetch('/api/diagnose', {
                 method: 'POST',
                 headers: {
@@ -49,41 +49,41 @@ export default function DiagnosePage() {
 
             setResult(data);
 
-            // 2. Upload Image to Supabase Storage
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+            // 2. Only save to Supabase if it's a real diagnosis (not a rejection)
+            if (!data.isRejection) {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
-                const { error: uploadError } = await supabase.storage
-                    .from('scans')
-                    .upload(fileName, file);
+                    const { error: uploadError } = await supabase.storage
+                        .from('scans')
+                        .upload(fileName, file);
 
-                if (uploadError) {
-                    console.error('Error uploading image:', uploadError);
-                    // Continue even if upload fails, just won't have image URL
-                }
+                    if (uploadError) {
+                        console.error('Error uploading image:', uploadError);
+                    }
 
-                // Get Public URL
-                const { data: { publicUrl } } = supabase.storage
-                    .from('scans')
-                    .getPublicUrl(fileName);
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('scans')
+                        .getPublicUrl(fileName);
 
-                // 3. Save Diagnosis to Database
-                const { error: dbError } = await supabase
-                    .from('diagnoses')
-                    .insert([{
-                        user_id: user.id,
-                        image_url: publicUrl,
-                        disease_name: data.diseaseName,
-                        confidence: parseFloat(data.confidence) / 100, // Convert percentage to 0-1 if needed, or keep as is. Schema has float.
-                        symptoms: data.symptoms,
-                        treatment: data.treatment,
-                        prevention: data.prevention
-                    }]);
+                    // 3. Save Diagnosis to Database
+                    const { error: dbError } = await supabase
+                        .from('diagnoses')
+                        .insert([{
+                            user_id: user.id,
+                            image_url: publicUrl,
+                            disease_name: data.diseaseName,
+                            confidence: parseFloat(data.confidence) / 100,
+                            symptoms: data.symptoms,
+                            treatment: data.treatment,
+                            prevention: data.prevention
+                        }]);
 
-                if (dbError) {
-                    console.error('Error saving diagnosis:', dbError);
+                    if (dbError) {
+                        console.error('Error saving diagnosis:', dbError);
+                    }
                 }
             }
 
@@ -196,36 +196,56 @@ export default function DiagnosePage() {
                 {/* Results Section */}
                 <div className="space-y-6">
                     {result ? (
-                        <Card className="border-green-200 bg-green-50/50">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-green-800">
-                                    <CheckCircle className="h-6 w-6" />
-                                    Diagnosis Complete
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div>
-                                    <h3 className="font-semibold text-gray-900">Disease Detected</h3>
-                                    <p className="text-lg text-green-700 font-bold">{result.diseaseName}</p>
-                                    <p className="text-sm text-gray-500">Confidence: {result.confidence}%</p>
-                                </div>
+                        result.isRejection ? (
+                            /* ── Not a tomato leaf: amber warning card ── */
+                            <Card className="border-amber-300 bg-amber-50/50">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-amber-800">
+                                        <AlertCircle className="h-6 w-6" />
+                                        Image Not Recognized
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <p className="text-sm text-amber-900">{result.symptoms}</p>
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 mb-1">Tips for Best Results</h3>
+                                        <p className="text-sm text-gray-700">{result.prevention}</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            /* ── Valid diagnosis: green success card ── */
+                            <Card className="border-green-200 bg-green-50/50">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-green-800">
+                                        <CheckCircle className="h-6 w-6" />
+                                        Diagnosis Complete
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900">Disease Detected</h3>
+                                        <p className="text-lg text-green-700 font-bold">{result.diseaseName}</p>
+                                        <p className="text-sm text-gray-500">Confidence: {result.confidence}%</p>
+                                    </div>
 
-                                <div>
-                                    <h3 className="font-semibold text-gray-900 mb-1">Symptoms</h3>
-                                    <p className="text-sm text-gray-700">{result.symptoms}</p>
-                                </div>
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 mb-1">Symptoms</h3>
+                                        <p className="text-sm text-gray-700">{result.symptoms}</p>
+                                    </div>
 
-                                <div>
-                                    <h3 className="font-semibold text-gray-900 mb-1">Recommended Treatment</h3>
-                                    <p className="text-sm text-gray-700">{result.treatment}</p>
-                                </div>
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 mb-1">Recommended Treatment</h3>
+                                        <p className="text-sm text-gray-700">{result.treatment}</p>
+                                    </div>
 
-                                <div>
-                                    <h3 className="font-semibold text-gray-900 mb-1">Prevention</h3>
-                                    <p className="text-sm text-gray-700">{result.prevention}</p>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 mb-1">Prevention</h3>
+                                        <p className="text-sm text-gray-700">{result.prevention}</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )
                     ) : (
                         <Card className="h-full flex items-center justify-center min-h-[300px] bg-gray-50 border-dashed">
                             <div className="text-center p-6">
