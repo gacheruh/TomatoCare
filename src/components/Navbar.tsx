@@ -5,26 +5,53 @@ import { usePathname } from 'next/navigation';
 import { Menu, Leaf, LogOut, User, LayoutDashboard } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useLanguage } from '@/lib/LanguageContext';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export default function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
     const [user, setUser] = useState<SupabaseUser | null>(null);
+    const [firstName, setFirstName] = useState<string>('');
     const pathname = usePathname();
     const isLandingPage = pathname === '/';
+    const { t } = useLanguage();
 
     useEffect(() => {
         // Get initial session
         supabase.auth.getUser().then(({ data: { user } }) => {
             setUser(user);
+            if (user) fetchProfile(user.id, user);
         });
 
         // Listen for auth state changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setUser(session?.user ?? null);
+            if (session?.user) {
+                fetchProfile(session.user.id, session.user);
+            } else {
+                setFirstName('');
+            }
         });
 
         return () => subscription.unsubscribe();
     }, []);
+
+    const fetchProfile = async (userId: string, authUser: SupabaseUser) => {
+        try {
+            const { data } = await supabase
+                .from('profiles')
+                .select('full_name')
+                .eq('id', userId)
+                .single();
+
+            const fullName = data?.full_name || authUser.user_metadata?.full_name || '';
+            const name = fullName ? fullName.split(' ')[0] : '';
+            setFirstName(name);
+        } catch {
+            // Fallback to user_metadata
+            const fullName = authUser.user_metadata?.full_name || '';
+            setFirstName(fullName ? fullName.split(' ')[0] : '');
+        }
+    };
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
@@ -45,7 +72,7 @@ export default function Navbar({ toggleSidebar }: { toggleSidebar: () => void })
                         <div className="bg-green-600 p-1.5 rounded-lg">
                             <Leaf className="h-6 w-6 text-white" />
                         </div>
-                        <span className="text-xl font-bold text-gray-900 tracking-tight">AgriDiagnose</span>
+                        <span className="text-xl font-bold text-gray-900 tracking-tight">{t('brand.name')}</span>
                     </Link>
                 </div>
 
@@ -57,7 +84,7 @@ export default function Navbar({ toggleSidebar }: { toggleSidebar: () => void })
                                     <User className="h-4 w-4 text-green-700" />
                                 </div>
                                 <span className="font-medium truncate max-w-[150px]">
-                                    {user.email}
+                                    {firstName || user.email}
                                 </span>
                             </div>
                             {isLandingPage ? (
@@ -66,7 +93,7 @@ export default function Navbar({ toggleSidebar }: { toggleSidebar: () => void })
                                     className="flex items-center gap-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-md transition-colors cursor-pointer"
                                 >
                                     <LayoutDashboard className="h-4 w-4" />
-                                    <span>Go to Dashboard</span>
+                                    <span>{t('nav.goToDashboard')}</span>
                                 </Link>
                             ) : (
                                 <button
@@ -74,17 +101,17 @@ export default function Navbar({ toggleSidebar }: { toggleSidebar: () => void })
                                     className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-md transition-colors cursor-pointer"
                                 >
                                     <LogOut className="h-4 w-4" />
-                                    <span className="hidden sm:inline">Sign Out</span>
+                                    <span className="hidden sm:inline">{t('nav.signOut')}</span>
                                 </button>
                             )}
                         </>
                     ) : (
                         <>
                             <Link href="/auth/login" className="text-sm font-medium text-gray-700 hover:text-green-600 hidden sm:block cursor-pointer">
-                                Log in
+                                {t('nav.login')}
                             </Link>
                             <Link href="/auth/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer">
-                                Get Started
+                                {t('nav.getStarted')}
                             </Link>
                         </>
                     )}

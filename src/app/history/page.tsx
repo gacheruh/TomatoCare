@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface Diagnosis {
     id: string;
@@ -27,6 +28,7 @@ export default function HistoryPage() {
     const [showDateMenu, setShowDateMenu] = useState(false);
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const { t } = useLanguage();
 
     useEffect(() => {
         fetchHistory();
@@ -89,8 +91,8 @@ export default function HistoryPage() {
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight text-gray-900">Diagnosis History</h1>
-                <p className="text-gray-500">View and manage your past plant diagnosis reports.</p>
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900">{t('history.title')}</h1>
+                <p className="text-gray-500">{t('history.subtitle')}</p>
             </div>
 
             {/* Filters and Search */}
@@ -98,7 +100,7 @@ export default function HistoryPage() {
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
-                        placeholder="Search by disease..."
+                        placeholder={t('history.searchPlaceholder')}
                         className="pl-10"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -113,14 +115,14 @@ export default function HistoryPage() {
                         onClick={() => { setShowFilterMenu(!showFilterMenu); setShowDateMenu(false); }}
                     >
                         <Filter className="h-4 w-4" />
-                        {filterType === 'all' ? 'Filter' : filterType === 'healthy' ? 'Healthy' : 'Diseased'}
+                        {filterType === 'all' ? t('history.filter') : filterType === 'healthy' ? t('history.healthyOnly') : t('history.diseasedOnly')}
                     </Button>
                     {showFilterMenu && (
                         <div className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-48 py-1">
                             {[
-                                { value: 'all' as FilterType, label: 'All Results' },
-                                { value: 'healthy' as FilterType, label: 'Healthy Only' },
-                                { value: 'diseased' as FilterType, label: 'Diseased Only' },
+                                { value: 'all' as FilterType, label: t('history.allResults') },
+                                { value: 'healthy' as FilterType, label: t('history.healthyOnly') },
+                                { value: 'diseased' as FilterType, label: t('history.diseasedOnly') },
                             ].map(option => (
                                 <button
                                     key={option.value}
@@ -142,12 +144,12 @@ export default function HistoryPage() {
                         onClick={() => { setShowDateMenu(!showDateMenu); setShowFilterMenu(false); }}
                     >
                         <Calendar className="h-4 w-4" />
-                        {dateFrom || dateTo ? 'Date Set' : 'Date Range'}
+                        {dateFrom || dateTo ? t('history.dateSet') : t('history.dateRange')}
                     </Button>
                     {showDateMenu && (
                         <div className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-72 p-4 space-y-3">
                             <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">From</label>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">{t('history.from')}</label>
                                 <input
                                     type="date"
                                     value={dateFrom}
@@ -156,7 +158,7 @@ export default function HistoryPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">To</label>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">{t('history.to')}</label>
                                 <input
                                     type="date"
                                     value={dateTo}
@@ -171,14 +173,14 @@ export default function HistoryPage() {
                                     className="flex-1 cursor-pointer"
                                     onClick={() => { setDateFrom(''); setDateTo(''); }}
                                 >
-                                    Clear
+                                    {t('history.clear')}
                                 </Button>
                                 <Button
                                     size="sm"
                                     className="flex-1 bg-green-600 hover:bg-green-700 cursor-pointer"
                                     onClick={() => setShowDateMenu(false)}
                                 >
-                                    Apply
+                                    {t('history.apply')}
                                 </Button>
                             </div>
                         </div>
@@ -189,7 +191,7 @@ export default function HistoryPage() {
             {/* Active filters indicator */}
             {hasActiveFilters && (
                 <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm text-gray-500">Active filters:</span>
+                    <span className="text-sm text-gray-500">{t('history.activeFilters')}</span>
                     {searchTerm && (
                         <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-xs font-medium">
                             Search: &quot;{searchTerm}&quot;
@@ -209,14 +211,14 @@ export default function HistoryPage() {
                         </span>
                     )}
                     <button onClick={clearFilters} className="text-xs text-red-500 hover:text-red-700 underline cursor-pointer">
-                        Clear all
+                        {t('history.clearAll')}
                     </button>
                 </div>
             )}
 
             {/* Results count */}
             <p className="text-sm text-gray-500">
-                Showing {filteredItems.length} of {historyItems.length} results
+                {t('history.showing')} {filteredItems.length} {t('history.of')} {historyItems.length} {t('history.results')}
             </p>
 
             {/* History Grid */}
@@ -249,10 +251,10 @@ export default function HistoryPage() {
                                                 ) : (
                                                     <AlertTriangle className="mr-1 h-3 w-3" />
                                                 )}
-                                                {status}
+                                                {status === 'Healthy' ? t('history.healthy') : t('history.actionNeeded')}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-gray-500">Confidence: {Math.round(item.confidence * 100)}%</p>
+                                        <p className="text-sm text-gray-500">{t('history.confidence')}: {Math.round(item.confidence * 100)}%</p>
                                         <p className="text-xs text-gray-400">
                                             {new Date(item.created_at).toLocaleDateString()} • {new Date(item.created_at).toLocaleTimeString()}
                                         </p>
@@ -264,18 +266,18 @@ export default function HistoryPage() {
                 ) : (
                     <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
                         <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900">No history found</h3>
+                        <h3 className="text-lg font-medium text-gray-900">{t('history.noHistory')}</h3>
                         <p className="text-gray-500 mt-2">
-                            {hasActiveFilters ? 'Try adjusting your filters or search terms.' : 'Your diagnosis history will appear here.'}
+                            {hasActiveFilters ? t('history.adjustFilters') : t('history.historyAppears')}
                         </p>
                         {hasActiveFilters ? (
                             <button onClick={clearFilters} className="mt-4 text-green-600 hover:text-green-700 underline text-sm cursor-pointer">
-                                Clear all filters
+                                {t('history.clearAllFilters')}
                             </button>
                         ) : (
                             <Link href="/diagnose" className="mt-4 inline-block">
                                 <Button className="bg-green-600 hover:bg-green-700 cursor-pointer">
-                                    Start New Scan
+                                    {t('history.startNewScan')}
                                 </Button>
                             </Link>
                         )}

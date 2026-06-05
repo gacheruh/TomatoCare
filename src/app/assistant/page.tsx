@@ -38,7 +38,7 @@ const ChatBubble = memo(function ChatBubble({ msg }: { msg: ChatMessage }) {
 
 export default function AssistantPage() {
     const [messages, setMessages] = useState<ChatMessage[]>([
-        { role: 'assistant', content: 'Hello! I am your AgriDiagnose assistant. Ask me anything about your crops, diseases, or farming tips.' }
+        { role: 'assistant', content: 'Hello! I am your TomatoCare assistant. Ask me anything about your crops, diseases, or farming tips.' }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);

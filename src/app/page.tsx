@@ -15,7 +15,7 @@ export default function LandingPage() {
                 <span className="text-green-600">Powered by AI</span>
               </h1>
               <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
-                Protect your crops with AgriDiagnose. Upload a photo, get an instant diagnosis, and receive expert treatment recommendations in seconds.
+                Protect your crops with TomatoCare. Upload a photo, get an instant diagnosis, and receive expert treatment recommendations in seconds.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 min-w-[200px]">
@@ -96,7 +96,7 @@ export default function LandingPage() {
               {
                 name: "John Doe",
                 role: "Maize Farmer",
-                quote: "AgriDiagnose saved my maize crop from fall armyworm. The early detection was a game changer."
+                quote: "TomatoCare saved my maize crop from fall armyworm. The early detection was a game changer."
               },
               {
                 name: "Jane Smith",
@@ -135,10 +135,10 @@ export default function LandingPage() {
             <div className="bg-green-600 p-1.5 rounded-lg">
               <Leaf className="h-5 w-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-gray-900">AgriDiagnose</span>
+            <span className="text-lg font-bold text-gray-900">TomatoCare</span>
           </div>
           <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} AgriDiagnose. All rights reserved.
+            © {new Date().getFullYear()} TomatoCare. All rights reserved.
           </p>
           <div className="flex gap-6">
             <Link href="#" className="text-sm text-gray-500 hover:text-green-600">Privacy Policy</Link>

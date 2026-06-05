@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface Diagnosis {
     id: string;
@@ -28,6 +29,7 @@ interface Diagnosis {
 
 export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
+    const [firstName, setFirstName] = useState('');
     const [stats, setStats] = useState({
         totalScans: 0,
         healthyPlants: 0,
@@ -35,12 +37,28 @@ export default function DashboardPage() {
         mostCommon: 'N/A'
     });
     const [recentActivity, setRecentActivity] = useState<Diagnosis[]>([]);
+    const { t } = useLanguage();
 
     useEffect(() => {
         async function fetchData() {
             try {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) return;
+
+                // Fetch profile for name
+                try {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('full_name')
+                        .eq('id', user.id)
+                        .single();
+
+                    const fullName = profile?.full_name || user.user_metadata?.full_name || '';
+                    setFirstName(fullName ? fullName.split(' ')[0] : '');
+                } catch {
+                    const fullName = user.user_metadata?.full_name || '';
+                    setFirstName(fullName ? fullName.split(' ')[0] : '');
+                }
 
                 // Fetch diagnoses
                 const { data: diagnoses, error } = await supabase
@@ -84,33 +102,33 @@ export default function DashboardPage() {
 
     const statCards = [
         {
-            title: "Total Scans",
+            title: t('dashboard.totalScans'),
             value: stats.totalScans.toString(),
-            description: "Lifetime scans",
+            description: t('dashboard.lifetimeScans'),
             icon: Activity,
             color: "text-blue-600",
             bg: "bg-blue-100"
         },
         {
-            title: "Healthy Plants",
+            title: t('dashboard.healthyPlants'),
             value: stats.healthyPlants.toString(),
-            description: `${stats.totalScans > 0 ? Math.round((stats.healthyPlants / stats.totalScans) * 100) : 0}% of total scans`,
+            description: `${stats.totalScans > 0 ? Math.round((stats.healthyPlants / stats.totalScans) * 100) : 0}% ${t('dashboard.ofTotalScans')}`,
             icon: CheckCircle,
             color: "text-green-600",
             bg: "bg-green-100"
         },
         {
-            title: "Diseases Detected",
+            title: t('dashboard.diseasesDetected'),
             value: stats.diseasesDetected.toString(),
-            description: "Requires attention",
+            description: t('dashboard.requiresAttention'),
             icon: AlertTriangle,
             color: "text-red-600",
             bg: "bg-red-100"
         },
         {
-            title: "Most Common",
+            title: t('dashboard.mostCommon'),
             value: stats.mostCommon,
-            description: "Top detected issue",
+            description: t('dashboard.topDetected'),
             icon: TrendingUp,
             color: "text-yellow-600",
             bg: "bg-yellow-100"
@@ -118,12 +136,12 @@ export default function DashboardPage() {
     ];
 
     const quickActions = [
-        { name: 'Scan Plant', href: '/diagnose', icon: Scan, color: 'bg-green-600' },
-        { name: 'Farm History', href: '/history', icon: History, color: 'bg-blue-600' },
-        { name: 'My Farms', href: '/farms', icon: TreeDeciduous, color: 'bg-yellow-600' },
-        { name: 'Knowledge Hub', href: '/learn', icon: BookOpen, color: 'bg-purple-600' },
-        { name: 'Assistant', href: '/assistant', icon: MessageSquare, color: 'bg-pink-600' },
-        { name: 'Settings', href: '/settings', icon: Settings, color: 'bg-gray-600' },
+        { name: t('dashboard.scanPlant'), href: '/diagnose', icon: Scan, color: 'bg-green-600' },
+        { name: t('dashboard.farmHistory'), href: '/history', icon: History, color: 'bg-blue-600' },
+        { name: t('dashboard.myFarms'), href: '/farms', icon: TreeDeciduous, color: 'bg-yellow-600' },
+        { name: t('dashboard.knowledgeHub'), href: '/learn', icon: BookOpen, color: 'bg-purple-600' },
+        { name: t('dashboard.assistant'), href: '/assistant', icon: MessageSquare, color: 'bg-pink-600' },
+        { name: t('dashboard.settings'), href: '/settings', icon: Settings, color: 'bg-gray-600' },
     ];
 
     if (loading) {
@@ -137,8 +155,10 @@ export default function DashboardPage() {
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
-                <p className="text-gray-500">Welcome back! Here's what's happening on your farms.</p>
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900">{t('dashboard.title')}</h1>
+                <p className="text-gray-500">
+                    {t('dashboard.welcome')}{firstName ? `, ${firstName}` : ''}! {t('dashboard.subtitle')}
+                </p>
             </div>
 
             {/* Analytics Cards */}
@@ -168,7 +188,7 @@ export default function DashboardPage() {
 
             {/* Quick Actions */}
             <div>
-                <h2 className="text-xl font-semibold mb-4 text-gray-900">Quick Actions</h2>
+                <h2 className="text-xl font-semibold mb-4 text-gray-900">{t('dashboard.quickActions')}</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     {quickActions.map((action, index) => {
                         const Icon = action.icon;
@@ -190,7 +210,7 @@ export default function DashboardPage() {
 
             {/* Recent Activity Section */}
             <div>
-                <h2 className="text-xl font-semibold mb-4 text-gray-900">Recent Activity</h2>
+                <h2 className="text-xl font-semibold mb-4 text-gray-900">{t('dashboard.recentActivity')}</h2>
                 <Card>
                     <CardContent className="p-0">
                         {recentActivity.length > 0 ? (
@@ -219,7 +239,7 @@ export default function DashboardPage() {
                                                     ? 'bg-green-100 text-green-800'
                                                     : 'bg-red-100 text-red-800'
                                                 }`}>
-                                                {activity.disease_name.toLowerCase().includes('healthy') ? 'Healthy' : 'Action Needed'}
+                                                {activity.disease_name.toLowerCase().includes('healthy') ? t('dashboard.healthy') : t('dashboard.actionNeeded')}
                                             </div>
                                         </div>
                                     </Link>
@@ -227,9 +247,9 @@ export default function DashboardPage() {
                             </div>
                         ) : (
                             <div className="p-8 text-center text-gray-500">
-                                <p>No recent activity found.</p>
+                                <p>{t('dashboard.noActivity')}</p>
                                 <Link href="/diagnose" className="text-green-600 hover:underline mt-2 inline-block">
-                                    Start your first scan
+                                    {t('dashboard.startFirstScan')}
                                 </Link>
                             </div>
                         )}

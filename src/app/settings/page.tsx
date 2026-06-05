@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -18,6 +19,7 @@ export default function SettingsPage() {
         full_name: '',
         email: ''
     });
+    const { t, lang, setLang } = useLanguage();
 
     useEffect(() => {
         fetchProfile();
@@ -69,10 +71,10 @@ export default function SettingsPage() {
                 });
 
             if (error) throw error;
-            alert('Profile updated successfully!');
+            alert(t('settings.profileUpdated'));
         } catch (error) {
             console.error('Error updating profile:', error);
-            alert('Failed to update profile.');
+            alert(t('settings.profileFailed'));
         } finally {
             setSaving(false);
         }
@@ -94,8 +96,8 @@ export default function SettingsPage() {
     return (
         <div className="max-w-2xl mx-auto space-y-8">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight text-gray-900">Settings</h1>
-                <p className="text-gray-500">Manage your account preferences and app settings.</p>
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900">{t('settings.title')}</h1>
+                <p className="text-gray-500">{t('settings.subtitle')}</p>
             </div>
 
             <div className="space-y-6">
@@ -104,12 +106,12 @@ export default function SettingsPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-lg">
                             <User className="h-5 w-5" />
-                            Profile Information
+                            {t('settings.profileInfo')}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Full Name</Label>
+                            <Label htmlFor="name">{t('settings.fullName')}</Label>
                             <Input
                                 id="name"
                                 value={profile.full_name}
@@ -117,7 +119,7 @@ export default function SettingsPage() {
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="email">Email Address</Label>
+                            <Label htmlFor="email">{t('settings.email')}</Label>
                             <Input id="email" value={profile.email} disabled />
                         </div>
                         <Button
@@ -126,7 +128,7 @@ export default function SettingsPage() {
                             disabled={saving}
                         >
                             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                            Save Changes
+                            {t('settings.saveChanges')}
                         </Button>
                     </CardContent>
                 </Card>
@@ -136,16 +138,19 @@ export default function SettingsPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-lg">
                             <Globe className="h-5 w-5" />
-                            Language & Region
+                            {t('settings.language')}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid gap-2">
-                            <Label>Language</Label>
-                            <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                                <option>English</option>
-                                <option>Swahili</option>
-                                <option>Sheng</option>
+                            <Label>{t('settings.languageLabel')}</Label>
+                            <select
+                                value={lang}
+                                onChange={(e) => setLang(e.target.value as 'en' | 'sw')}
+                                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 cursor-pointer"
+                            >
+                                <option value="en">English</option>
+                                <option value="sw">Kiswahili</option>
                             </select>
                         </div>
                     </CardContent>
@@ -156,16 +161,16 @@ export default function SettingsPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-lg">
                             <Bell className="h-5 w-5" />
-                            Notifications
+                            {t('settings.notifications')}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <Label htmlFor="email-notifs" className="cursor-pointer">Email Notifications</Label>
+                            <Label htmlFor="email-notifs" className="cursor-pointer">{t('settings.emailNotifs')}</Label>
                             <input type="checkbox" id="email-notifs" className="h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500" defaultChecked />
                         </div>
                         <div className="flex items-center justify-between">
-                            <Label htmlFor="push-notifs" className="cursor-pointer">Push Notifications</Label>
+                            <Label htmlFor="push-notifs" className="cursor-pointer">{t('settings.pushNotifs')}</Label>
                             <input type="checkbox" id="push-notifs" className="h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500" defaultChecked />
                         </div>
                     </CardContent>
@@ -176,14 +181,14 @@ export default function SettingsPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-lg text-red-600">
                             <Shield className="h-5 w-5" />
-                            Danger Zone
+                            {t('settings.dangerZone')}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="font-medium text-gray-900">Sign Out</p>
-                                <p className="text-sm text-gray-500">Log out of your account on this device.</p>
+                                <p className="font-medium text-gray-900">{t('nav.signOut')}</p>
+                                <p className="text-sm text-gray-500">{t('settings.signOutDesc')}</p>
                             </div>
                             <Button
                                 variant="outline"
@@ -191,15 +196,15 @@ export default function SettingsPage() {
                                 onClick={handleSignOut}
                             >
                                 <LogOut className="mr-2 h-4 w-4" />
-                                Sign Out
+                                {t('nav.signOut')}
                             </Button>
                         </div>
                         <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
                             <div>
-                                <p className="font-medium text-gray-900">Delete Account</p>
-                                <p className="text-sm text-gray-500">Permanently remove your data.</p>
+                                <p className="font-medium text-gray-900">{t('settings.deleteAccount')}</p>
+                                <p className="text-sm text-gray-500">{t('settings.deleteDesc')}</p>
                             </div>
-                            <Button variant="destructive">Delete Account</Button>
+                            <Button variant="destructive">{t('settings.deleteAccount')}</Button>
                         </div>
                     </CardContent>
                 </Card>

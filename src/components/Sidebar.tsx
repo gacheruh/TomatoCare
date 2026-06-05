@@ -13,19 +13,27 @@ import {
     LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/lib/LanguageContext';
+import { supabase } from '@/lib/supabase';
 
 const sidebarItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Diagnose', href: '/diagnose', icon: Scan },
-    { name: 'History', href: '/history', icon: History },
-    { name: 'My Farms', href: '/farms', icon: TreeDeciduous },
-    { name: 'Knowledge Hub', href: '/learn', icon: BookOpen },
-    { name: 'Assistant', href: '/assistant', icon: MessageSquare },
-    { name: 'Settings', href: '/settings', icon: Settings },
+    { nameKey: 'sidebar.dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { nameKey: 'sidebar.diagnose', href: '/diagnose', icon: Scan },
+    { nameKey: 'sidebar.history', href: '/history', icon: History },
+    { nameKey: 'sidebar.myFarms', href: '/farms', icon: TreeDeciduous },
+    { nameKey: 'sidebar.knowledgeHub', href: '/learn', icon: BookOpen },
+    { nameKey: 'sidebar.assistant', href: '/assistant', icon: MessageSquare },
+    { nameKey: 'sidebar.settings', href: '/settings', icon: Settings },
 ];
 
 export default function Sidebar({ isOpen, closeSidebar }: { isOpen: boolean; closeSidebar: () => void }) {
     const pathname = usePathname();
+    const { t } = useLanguage();
+
+    const handleSignOut = async () => {
+        await supabase.auth.signOut();
+        window.location.href = '/';
+    };
 
     return (
         <>
@@ -59,16 +67,19 @@ export default function Sidebar({ isOpen, closeSidebar }: { isOpen: boolean; clo
                                     )}
                                 >
                                     <Icon className={cn("h-5 w-5", isActive ? "text-green-600" : "text-gray-500")} />
-                                    {item.name}
+                                    {t(item.nameKey)}
                                 </Link>
                             );
                         })}
                     </div>
 
                     <div className="px-3 mt-auto border-t border-gray-200 pt-4">
-                        <button className="flex w-full items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
+                        <button
+                            onClick={handleSignOut}
+                            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        >
                             <LogOut className="h-5 w-5" />
-                            Sign Out
+                            {t('sidebar.signOut')}
                         </button>
                     </div>
                 </div>

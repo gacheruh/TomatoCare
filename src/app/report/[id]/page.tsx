@@ -3,10 +3,11 @@
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Share2, FileText, Syringe, ClipboardCheck, Calendar, Download, Loader2, Scan } from 'lucide-react';
+import { ArrowLeft, Share2, FileText, Syringe, ClipboardCheck, Calendar, Download, Loader2, Scan, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
+import { useLanguage } from '@/lib/LanguageContext';
 
 interface Diagnosis {
     id: string;
@@ -24,10 +25,25 @@ export default function ReportPage() {
     const id = params.id as string;
     const [report, setReport] = useState<Diagnosis | null>(null);
     const [loading, setLoading] = useState(true);
+    const [noteInput, setNoteInput] = useState('');
+    const [savedNotes, setSavedNotes] = useState<{ text: string; timestamp: string }[]>([]);
+    const { t } = useLanguage();
 
     useEffect(() => {
         if (id) {
             fetchReport();
+            // Load stacked notes from localStorage
+            const stored = localStorage.getItem(`diagnosis-notes-${id}`);
+            if (stored) {
+                try {
+                    setSavedNotes(JSON.parse(stored));
+                } catch {
+                    // Migrate old single-string notes to new format
+                    if (stored && !stored.startsWith('[')) {
+                        setSavedNotes([{ text: stored, timestamp: new Date().toISOString() }]);
+                    }
+                }
+            }
         }
     }, [id]);
 
@@ -48,6 +64,21 @@ export default function ReportPage() {
         }
     };
 
+    const handleAddNote = () => {
+        if (!noteInput.trim()) return;
+        const newNote = { text: noteInput.trim(), timestamp: new Date().toISOString() };
+        const updated = [newNote, ...savedNotes];
+        setSavedNotes(updated);
+        localStorage.setItem(`diagnosis-notes-${id}`, JSON.stringify(updated));
+        setNoteInput('');
+    };
+
+    const handleDeleteNote = (index: number) => {
+        const updated = savedNotes.filter((_, i) => i !== index);
+        setSavedNotes(updated);
+        localStorage.setItem(`diagnosis-notes-${id}`, JSON.stringify(updated));
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-screen">
@@ -59,10 +90,10 @@ export default function ReportPage() {
     if (!report) {
         return (
             <div className="max-w-4xl mx-auto py-12 text-center">
-                <h1 className="text-2xl font-bold text-gray-900">Report Not Found</h1>
-                <p className="text-gray-500 mt-2">The diagnosis report you are looking for does not exist.</p>
+                <h1 className="text-2xl font-bold text-gray-900">{t('report.notFound')}</h1>
+                <p className="text-gray-500 mt-2">{t('report.notFoundDesc')}</p>
                 <Link href="/history">
-                    <Button className="mt-4 bg-green-600 hover:bg-green-700">Back to History</Button>
+                    <Button className="mt-4 bg-green-600 hover:bg-green-700">{t('report.backToHistory')}</Button>
                 </Link>
             </div>
         );
@@ -79,7 +110,7 @@ export default function ReportPage() {
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Diagnosis Report</h1>
+                        <h1 className="text-2xl font-bold text-gray-900">{t('report.title')}</h1>
                         <div className="flex items-center text-sm text-gray-500 gap-2">
                             <Calendar className="h-4 w-4" />
                             {new Date(report.created_at).toLocaleDateString()} • ID: #{report.id.slice(0, 8)}
@@ -92,8 +123,8 @@ export default function ReportPage() {
                         className="gap-2"
                         onClick={async () => {
                             const shareData = {
-                                title: `Diagnosis Report: ${report.disease_name}`,
-                                text: `AgriDiagnose Report — ${report.disease_name} (${Math.round(report.confidence * 100)}% confidence). Diagnosed on ${new Date(report.created_at).toLocaleDateString()}.`,
+                                title: `${t('report.title')}: ${report.disease_name}`,
+                                text: `TomatoCare Report — ${report.disease_name} (${Math.round(report.confidence * 100)}% ${t('report.confidence')}). ${new Date(report.created_at).toLocaleDateString()}.`,
                                 url: window.location.href,
                             };
                             try {
@@ -101,19 +132,18 @@ export default function ReportPage() {
                                     await navigator.share(shareData);
                                 } else {
                                     await navigator.clipboard.writeText(window.location.href);
-                                    alert('Report link copied to clipboard!');
+                                    alert(t('report.linkCopied'));
                                 }
                             } catch (err) {
-                                // User cancelled share or error
                                 if ((err as Error).name !== 'AbortError') {
                                     await navigator.clipboard.writeText(window.location.href);
-                                    alert('Report link copied to clipboard!');
+                                    alert(t('report.linkCopied'));
                                 }
                             }
                         }}
                     >
                         <Share2 className="h-4 w-4" />
-                        Share
+                        {t('report.share')}
                     </Button>
                     <Button
                         variant="outline"
@@ -123,7 +153,7 @@ export default function ReportPage() {
                         }}
                     >
                         <Download className="h-4 w-4" />
-                        PDF
+                        {t('report.pdf')}
                     </Button>
                 </div>
             </div>
@@ -142,7 +172,7 @@ export default function ReportPage() {
                             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
                                 <h2 className="text-white text-2xl font-bold">{report.disease_name}</h2>
                                 <p className="text-white/90">
-                                    {Math.round(report.confidence * 100)}% Confidence
+                                    {Math.round(report.confidence * 100)}% {t('report.confidence')}
                                 </p>
                             </div>
                         </div>
@@ -150,7 +180,7 @@ export default function ReportPage() {
                             <div className="flex items-start gap-3">
                                 <FileText className="h-5 w-5 text-blue-600 mt-1" />
                                 <div>
-                                    <h3 className="font-semibold text-gray-900">Symptoms Observed</h3>
+                                    <h3 className="font-semibold text-gray-900">{t('report.symptoms')}</h3>
                                     <p className="text-gray-600 mt-1">{report.symptoms}</p>
                                 </div>
                             </div>
@@ -162,7 +192,7 @@ export default function ReportPage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Syringe className="h-5 w-5 text-green-600" />
-                                Recommended Treatment
+                                {t('report.treatment')}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -175,7 +205,7 @@ export default function ReportPage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <ClipboardCheck className="h-5 w-5 text-yellow-600" />
-                                Prevention & Future Care
+                                {t('report.prevention')}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -188,11 +218,55 @@ export default function ReportPage() {
                 <div className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-lg">Farmer Notes</CardTitle>
+                            <CardTitle className="text-lg">{t('report.farmerNotes')}</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-gray-500 italic">No notes added yet.</p>
-                            <Button variant="link" className="px-0 mt-2 text-green-600">Add Notes</Button>
+                        <CardContent className="space-y-4">
+                            {/* Note input */}
+                            <div className="space-y-2">
+                                <textarea
+                                    value={noteInput}
+                                    onChange={(e) => setNoteInput(e.target.value)}
+                                    placeholder={t('report.notesPlaceholder')}
+                                    className="w-full min-h-[100px] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 resize-y"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                                            handleAddNote();
+                                        }
+                                    }}
+                                />
+                                <Button
+                                    onClick={handleAddNote}
+                                    className="w-full bg-green-600 hover:bg-green-700 gap-2"
+                                    disabled={!noteInput.trim()}
+                                >
+                                    <Save className="h-4 w-4" />
+                                    {t('report.saveNotes')}
+                                </Button>
+                            </div>
+
+                            {/* Saved notes stack */}
+                            {savedNotes.length > 0 && (
+                                <div className="space-y-3 pt-2 border-t border-gray-100">
+                                    {savedNotes.map((note, index) => (
+                                        <div
+                                            key={`${note.timestamp}-${index}`}
+                                            className="bg-gray-50 rounded-lg p-3 border border-gray-200 group relative"
+                                        >
+                                            <button
+                                                onClick={() => handleDeleteNote(index)}
+                                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity cursor-pointer"
+                                                title="Delete note"
+                                            >
+                                                <X className="h-3.5 w-3.5" />
+                                            </button>
+                                            <p className="text-sm text-gray-800 whitespace-pre-wrap pr-6">{note.text}</p>
+                                            <p className="text-xs text-gray-400 mt-2">
+                                                {new Date(note.timestamp).toLocaleString()}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
