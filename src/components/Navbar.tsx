@@ -1,13 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Leaf, LogOut, User } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Menu, Leaf, LogOut, User, LayoutDashboard } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export default function Navbar({ toggleSidebar }: { toggleSidebar: () => void }) {
     const [user, setUser] = useState<SupabaseUser | null>(null);
+    const pathname = usePathname();
+    const isLandingPage = pathname === '/';
 
     useEffect(() => {
         // Get initial session
@@ -34,7 +37,7 @@ export default function Navbar({ toggleSidebar }: { toggleSidebar: () => void })
                 <div className="flex items-center gap-4">
                     <button
                         onClick={toggleSidebar}
-                        className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-md"
+                        className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-md cursor-pointer"
                     >
                         <Menu className="h-6 w-6" />
                     </button>
@@ -57,20 +60,30 @@ export default function Navbar({ toggleSidebar }: { toggleSidebar: () => void })
                                     {user.email}
                                 </span>
                             </div>
-                            <button
-                                onClick={handleSignOut}
-                                className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-md transition-colors"
-                            >
-                                <LogOut className="h-4 w-4" />
-                                <span className="hidden sm:inline">Sign Out</span>
-                            </button>
+                            {isLandingPage ? (
+                                <Link
+                                    href="/dashboard"
+                                    className="flex items-center gap-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-md transition-colors cursor-pointer"
+                                >
+                                    <LayoutDashboard className="h-4 w-4" />
+                                    <span>Go to Dashboard</span>
+                                </Link>
+                            ) : (
+                                <button
+                                    onClick={handleSignOut}
+                                    className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-md transition-colors cursor-pointer"
+                                >
+                                    <LogOut className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Sign Out</span>
+                                </button>
+                            )}
                         </>
                     ) : (
                         <>
-                            <Link href="/auth/login" className="text-sm font-medium text-gray-700 hover:text-green-600 hidden sm:block">
+                            <Link href="/auth/login" className="text-sm font-medium text-gray-700 hover:text-green-600 hidden sm:block cursor-pointer">
                                 Log in
                             </Link>
-                            <Link href="/auth/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                            <Link href="/auth/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer">
                                 Get Started
                             </Link>
                         </>

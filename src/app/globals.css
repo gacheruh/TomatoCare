@@ -26,6 +26,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Ensure pointer cursor on all interactive elements */
+button, a, [role="button"], input[type="submit"], input[type="button"], select {
+  cursor: pointer;
+}
+
 /* Print styles for PDF export */
 @media print {
   nav, aside, .no-print {

@@ -52,7 +52,7 @@ export default function Sidebar({ isOpen, closeSidebar }: { isOpen: boolean; clo
                                     href={item.href}
                                     onClick={closeSidebar}
                                     className={cn(
-                                        "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
+                                        "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors cursor-pointer",
                                         isActive
                                             ? "bg-green-50 text-green-700"
                                             : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
@@ -66,7 +66,7 @@ export default function Sidebar({ isOpen, closeSidebar }: { isOpen: boolean; clo
                     </div>
 
                     <div className="px-3 mt-auto border-t border-gray-200 pt-4">
-                        <button className="flex w-full items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+                        <button className="flex w-full items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
                             <LogOut className="h-5 w-5" />
                             Sign Out
                         </button>
