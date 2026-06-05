@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python/jupyter (from remote)
+/plantvillage
+TomatoCare_CNN.ipynb
+class_distribution.png
+sample_images.png
+tomatocare_best.h5
+training_log.csv
+.ipynb_checkpoints/
+venv/
