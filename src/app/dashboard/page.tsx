@@ -13,8 +13,11 @@ import {
     AlertTriangle,
     CheckCircle,
     TrendingUp,
-    Loader2
+    Loader2,
+    ArrowRight,
+    Plus
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -154,11 +157,18 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-8">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight text-gray-900">{t('dashboard.title')}</h1>
-                <p className="text-gray-500">
-                    {t('dashboard.welcome')}{firstName ? `, ${firstName}` : ''}! {t('dashboard.subtitle')}
-                </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                        {t('dashboard.welcome')}{firstName ? `, ${firstName}` : ''}! 👋
+                    </h1>
+                    <p className="text-gray-500 mt-1">{t('dashboard.subtitle')}</p>
+                </div>
+                <Link href="/diagnose">
+                    <Button className="bg-green-600 hover:bg-green-700 rounded-xl gap-2">
+                        <Plus className="h-4 w-4" /> {t('dashboard.scanPlant')}
+                    </Button>
+                </Link>
             </div>
 
             {/* Analytics Cards */}
@@ -166,7 +176,7 @@ export default function DashboardPage() {
                 {statCards.map((stat, index) => {
                     const Icon = stat.icon;
                     return (
-                        <Card key={index}>
+                        <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-shadow">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">
                                     {stat.title}
@@ -194,7 +204,7 @@ export default function DashboardPage() {
                         const Icon = action.icon;
                         return (
                             <Link key={index} href={action.href}>
-                                <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+                                <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full">
                                     <CardContent className="flex flex-col items-center justify-center p-6 space-y-3 text-center h-full">
                                         <div className={`p-3 rounded-full ${action.color} text-white`}>
                                             <Icon className="h-6 w-6" />
@@ -210,8 +220,13 @@ export default function DashboardPage() {
 
             {/* Recent Activity Section */}
             <div>
-                <h2 className="text-xl font-semibold mb-4 text-gray-900">{t('dashboard.recentActivity')}</h2>
-                <Card>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">{t('dashboard.recentActivity')}</h2>
+                    <Link href="/history" className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1 cursor-pointer">
+                        View all <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                </div>
+                <Card className="border-0 shadow-sm">
                     <CardContent className="p-0">
                         {recentActivity.length > 0 ? (
                             <div className="divide-y divide-gray-100">

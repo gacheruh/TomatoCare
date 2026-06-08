@@ -90,10 +90,10 @@ export default function Navbar({ toggleSidebar }: { toggleSidebar: () => void })
                             {isLandingPage ? (
                                 <Link
                                     href="/dashboard"
-                                    className="flex items-center gap-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-md transition-colors cursor-pointer"
+                                    className="flex items-center gap-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 px-3 sm:px-4 py-2 rounded-md transition-colors cursor-pointer"
                                 >
                                     <LayoutDashboard className="h-4 w-4" />
-                                    <span>{t('nav.goToDashboard')}</span>
+                                    <span className="hidden sm:inline">{t('nav.goToDashboard')}</span>
                                 </Link>
                             ) : (
                                 <button
