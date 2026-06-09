@@ -17,6 +17,14 @@ interface Farm {
     created_at: string;
 }
 
+const farmThemes = [
+    { border: 'border-emerald-100/70', borderTop: 'border-t-emerald-500', bg: 'bg-emerald-50/20', icon: 'text-emerald-500', badge: 'bg-emerald-100 text-emerald-800' },
+    { border: 'border-amber-100/70', borderTop: 'border-t-amber-500', bg: 'bg-amber-50/20', icon: 'text-amber-500', badge: 'bg-amber-100 text-amber-800' },
+    { border: 'border-blue-100/70', borderTop: 'border-t-blue-500', bg: 'bg-blue-50/20', icon: 'text-blue-500', badge: 'bg-blue-100 text-blue-800' },
+    { border: 'border-teal-100/70', borderTop: 'border-t-teal-500', bg: 'bg-teal-50/20', icon: 'text-teal-500', badge: 'bg-teal-100 text-teal-800' },
+    { border: 'border-lime-100/70', borderTop: 'border-t-lime-500', bg: 'bg-lime-50/20', icon: 'text-lime-500', badge: 'bg-lime-100 text-lime-800' }
+];
+
 export default function FarmsPage() {
     const [farms, setFarms] = useState<Farm[]>([]);
     const [loading, setLoading] = useState(true);
@@ -163,45 +171,51 @@ export default function FarmsPage() {
 
             {farms.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {farms.map((farm) => (
-                        <Card key={farm.id} className="hover:shadow-md transition-shadow">
-                            <CardHeader className="flex flex-row items-start justify-between pb-2">
-                                <div className="space-y-1">
-                                    <CardTitle className="text-xl">{farm.name}</CardTitle>
-                                    <div className="flex items-center text-sm text-gray-500">
-                                        <MapPin className="mr-1 h-3 w-3" />
-                                        {farm.location}
-                                    </div>
-                                </div>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-500 flex items-center">
-                                            <Sprout className="mr-2 h-4 w-4" />
-                                            Crops
-                                        </span>
-                                        <span className="font-medium">{farm.crop_type}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-500">Size</span>
-                                        <span className="font-medium">{farm.size} Acres</span>
-                                    </div>
-                                    <div className="pt-4 border-t border-gray-100">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm font-medium text-gray-500">Added</span>
-                                            <span className="text-xs text-gray-400">
-                                                {new Date(farm.created_at).toLocaleDateString()}
-                                            </span>
+                    {farms.map((farm, index) => {
+                        const theme = farmThemes[index % farmThemes.length];
+                        return (
+                            <Card key={farm.id} className={`hover:shadow-md transition-all border ${theme.border} border-t-4 ${theme.borderTop} ${theme.bg}`}>
+                                <CardHeader className="flex flex-row items-start justify-between pb-2">
+                                    <div className="space-y-1">
+                                        <CardTitle className="text-xl font-bold text-gray-900">{farm.name}</CardTitle>
+                                        <div className="flex items-center text-sm text-gray-500">
+                                            <MapPin className="mr-1 h-3.5 w-3.5 text-gray-400" />
+                                            {farm.location}
                                         </div>
                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-500 flex items-center">
+                                                <Sprout className={`mr-2 h-4 w-4 ${theme.icon}`} />
+                                                Crops
+                                            </span>
+                                            <span className={`font-semibold px-2 py-0.5 rounded-md text-xs ${theme.badge}`}>{farm.crop_type}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-500 flex items-center">
+                                                <Tractor className={`mr-2 h-4 w-4 ${theme.icon}`} />
+                                                Size
+                                            </span>
+                                            <span className="font-semibold text-gray-800">{farm.size} Acres</span>
+                                        </div>
+                                        <div className="pt-4 border-t border-gray-100">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm font-medium text-gray-500">Added</span>
+                                                <span className="text-xs text-gray-400">
+                                                    {new Date(farm.created_at).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">

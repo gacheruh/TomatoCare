@@ -15,16 +15,43 @@ interface Article {
     source: string;
 }
 
+const categoryColors: Record<string, { bg: string; text: string; border: string; accent: string }> = {
+    'Diseases': {
+        bg: 'bg-red-50/30',
+        text: 'text-red-700',
+        border: 'border-red-100/70',
+        accent: 'bg-red-100 text-red-800'
+    },
+    'Pest Control': {
+        bg: 'bg-green-50/30',
+        text: 'text-green-700',
+        border: 'border-green-100/70',
+        accent: 'bg-green-100 text-green-800'
+    },
+    'Soil Health': {
+        bg: 'bg-amber-50/30',
+        text: 'text-amber-700',
+        border: 'border-amber-100/70',
+        accent: 'bg-amber-100 text-amber-800'
+    },
+    'Best Practices': {
+        bg: 'bg-blue-50/30',
+        text: 'text-blue-700',
+        border: 'border-blue-100/70',
+        accent: 'bg-blue-100 text-blue-800'
+    }
+};
+
 export default function LearnPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const { t } = useLanguage();
 
     const categories = [
-        { name: t('learn.diseases'), key: 'Diseases', icon: Bug, color: 'text-red-600', bg: 'bg-red-100' },
-        { name: t('learn.pestControl'), key: 'Pest Control', icon: Sprout, color: 'text-green-600', bg: 'bg-green-100' },
-        { name: t('learn.soilHealth'), key: 'Soil Health', icon: Flower, color: 'text-yellow-600', bg: 'bg-yellow-100' },
-        { name: t('learn.bestPractices'), key: 'Best Practices', icon: BookOpen, color: 'text-blue-600', bg: 'bg-blue-100' },
+        { name: t('learn.diseases'), key: 'Diseases', icon: Bug, color: 'text-red-600', bg: 'bg-red-100', activeRing: 'ring-2 ring-red-200 bg-red-50/30' },
+        { name: t('learn.pestControl'), key: 'Pest Control', icon: Sprout, color: 'text-green-600', bg: 'bg-green-100', activeRing: 'ring-2 ring-green-200 bg-green-50/30' },
+        { name: t('learn.soilHealth'), key: 'Soil Health', icon: Flower, color: 'text-yellow-600', bg: 'bg-yellow-100', activeRing: 'ring-2 ring-amber-200 bg-amber-50/30' },
+        { name: t('learn.bestPractices'), key: 'Best Practices', icon: BookOpen, color: 'text-blue-600', bg: 'bg-blue-100', activeRing: 'ring-2 ring-blue-200 bg-blue-50/30' },
     ];
 
     const articles: Article[] = [
@@ -192,7 +219,7 @@ export default function LearnPage() {
                     return (
                         <Card
                             key={i}
-                            className={`hover:shadow-md transition-shadow cursor-pointer text-center border-0 shadow-sm ${isActive ? 'ring-2 ring-green-200 bg-green-50/50' : 'bg-white'}`}
+                            className={`hover:shadow-md transition-all cursor-pointer text-center border-0 shadow-sm ${isActive ? cat.activeRing : 'bg-white'}`}
                             onClick={() => setActiveCategory(isActive ? null : cat.key)}
                         >
                             <CardContent className="p-6 flex flex-col items-center gap-3">
@@ -222,43 +249,51 @@ export default function LearnPage() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('learn.featuredArticles')}</h2>
                 {filteredArticles.length > 0 ? (
                     <div className="grid md:grid-cols-2 gap-6">
-                        {filteredArticles.map((article, i) => (
-                            <a
-                                key={i}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block group"
-                            >
-                                <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                                    <CardContent className="p-6 space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                                                {article.category}
-                                            </span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs text-gray-400">{article.readTime}</span>
-                                                <ExternalLink className="h-3 w-3 text-gray-400" />
+                        {filteredArticles.map((article, i) => {
+                            const colors = categoryColors[article.category] || {
+                                bg: 'bg-gray-50/50',
+                                text: 'text-gray-700',
+                                border: 'border-gray-100',
+                                accent: 'bg-gray-100 text-gray-800'
+                            };
+                            return (
+                                <a
+                                    key={i}
+                                    href={article.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block group"
+                                >
+                                    <Card className={`hover:shadow-md transition-all border ${colors.border} ${colors.bg} h-full`}>
+                                        <CardContent className="p-6 space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${colors.accent}`}>
+                                                    {article.category}
+                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs text-gray-400">{article.readTime}</span>
+                                                    <ExternalLink className="h-3 w-3 text-gray-400" />
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div>
-                                            <h3 className="text-xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">
-                                                {article.title}
-                                            </h3>
-                                            <p className="text-gray-500 mt-2 line-clamp-2">
-                                                {article.summary}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center justify-between pt-2">
-                                            <span className="text-xs text-gray-400">Source: {article.source}</span>
-                                            <div className="flex items-center text-green-600 font-medium text-sm">
-                                                {t('learn.readArticle')} <ArrowRight className="ml-1 h-4 w-4" />
+                                            <div>
+                                                <h3 className={`text-xl font-bold text-gray-900 group-hover:${colors.text} transition-colors`}>
+                                                    {article.title}
+                                                </h3>
+                                                <p className="text-gray-500 mt-2 line-clamp-2">
+                                                    {article.summary}
+                                                </p>
                                             </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </a>
-                        ))}
+                                            <div className="flex items-center justify-between pt-2 border-t border-gray-100/50">
+                                                <span className="text-xs text-gray-400">Source: {article.source}</span>
+                                                <div className={`flex items-center ${colors.text} font-semibold text-sm`}>
+                                                    {t('learn.readArticle')} <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </a>
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
