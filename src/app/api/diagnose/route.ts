@@ -181,7 +181,6 @@ Rules:
 
     for (const modelName of MODEL_NAMES) {
       try {
-        console.log(`[Gemini Validator] Trying model ${modelName}`);
         const model = genAI.getGenerativeModel({ model: modelName });
         result = await model.generateContent({
           contents: [{
@@ -195,7 +194,7 @@ Rules:
         break;
       } catch (err: any) {
         if (controller.signal.aborted) throw new Error('Gemini validation timed out');
-        console.warn(`[Gemini Validator] Model ${modelName} failed:`, err.message || err);
+        console.warn(`[CNN Validator] Model ${modelName} failed:`, err.message || err);
         lastError = err;
       }
     }
@@ -209,12 +208,12 @@ Rules:
     const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed: GeminiValidation = JSON.parse(cleanText);
 
-    console.log(`[Gemini Validator] Verdict: "${parsed.verdict}"${parsed.correctedDisease ? ` → ${parsed.correctedDisease}` : ''}`);
+    console.log(`[CNN Validator] Verdict: "${parsed.verdict}"${parsed.correctedDisease ? ` → ${parsed.correctedDisease}` : ''}`);
     return parsed;
 
   } catch (err: any) {
     clearTimeout(timeout);
-    console.warn('[Gemini Validator] Validation failed, will trust CNN:', err.message || err);
+    console.warn('[CNN Validator] Validation failed, will trust CNN:', err.message || err);
     return null;
   }
 }
@@ -242,7 +241,6 @@ If the plant looks healthy, use diseaseName "healthy".`;
 
   for (const modelName of MODEL_NAMES) {
     try {
-      console.log(`[Gemini Fallback] Trying model ${modelName}`);
       const model = genAI.getGenerativeModel({ model: modelName });
       result = await model.generateContent({
         contents: [{
@@ -255,7 +253,7 @@ If the plant looks healthy, use diseaseName "healthy".`;
       });
       break;
     } catch (err: any) {
-      console.warn(`[Gemini Fallback] Model ${modelName} failed:`, err.message || err);
+      console.warn(`[CNN Fallback] Model ${modelName} failed:`, err.message || err);
       lastError = err;
     }
   }
@@ -271,7 +269,7 @@ If the plant looks healthy, use diseaseName "healthy".`;
   try {
     return JSON.parse(cleanText);
   } catch {
-    console.error('[Gemini Fallback] JSON parse error:', cleanText);
+    console.error('[CNN Fallback] JSON parse error:', cleanText);
     return null;
   }
 }
@@ -290,7 +288,7 @@ export async function POST(req: NextRequest) {
 
     // ── Optional Bypass: Use Gemini-only mode directly ──────────────────────
     if (USE_GEM_ONLY) {
-      console.log('[Pipeline] USE_GEM_ONLY is active → skipping CNN, calling Gemini directly');
+      console.log('[Pipeline] USE_GEM_ONLY is active → skipping CNN, calling CNN directly');
       const geminiResult = await runGeminiClassifyFallback(base64Data);
 
       if (!geminiResult) {
@@ -312,7 +310,7 @@ export async function POST(req: NextRequest) {
       }
 
       const fallbackAdvisory = ADVISORY_DATABASE[geminiResult.diseaseName] ?? ADVISORY_DATABASE['healthy'];
-      console.log(`[Pipeline] GEMINI ONLY RESULT → "${geminiResult.diseaseName}"`);
+      console.log(`[Pipeline] CNN ONLY RESULT → "${geminiResult.diseaseName}"`);
       return NextResponse.json({
         diseaseName: geminiResult.diseaseName,
         confidence: geminiResult.confidence,
@@ -334,7 +332,7 @@ export async function POST(req: NextRequest) {
 
       // Case A: High confidence (≥ 85%) — skip Gemini entirely, serve from DB instantly
       if (cnn.confidence >= 85) {
-        console.log(`[Pipeline] HIGH CONFIDENCE (${cnn.confidence}%) → skipping Gemini, serving DB advisory`);
+        console.log(`[Pipeline] HIGH CONFIDENCE (${cnn.confidence}%) → skipping CNN validator, serving DB advisory`);
         return NextResponse.json({
           diseaseName: cnn.diseaseName,
           confidence: cnn.confidence,
@@ -348,12 +346,12 @@ export async function POST(req: NextRequest) {
       }
 
       // Case B: Low confidence (< 85%) — call lightweight Gemini validator
-      console.log(`[Pipeline] LOW CONFIDENCE (${cnn.confidence}%) → calling Gemini validator`);
+      console.log(`[Pipeline] LOW CONFIDENCE (${cnn.confidence}%) → calling CNN validator`);
       const validation = await validateWithGemini(base64Data, cnn.diseaseName);
 
       // Gemini says not a tomato leaf
       if (validation?.verdict === 'not_tomato') {
-        console.log('[Pipeline] NOT A TOMATO LEAF (Gemini rejected)');
+        console.log('[Pipeline] NOT A TOMATO LEAF (CNN rejected)');
         return NextResponse.json({
           diseaseName: 'Not a Tomato Leaf',
           confidence: 0,
@@ -371,7 +369,7 @@ export async function POST(req: NextRequest) {
       if (validation?.verdict === 'corrected' && validation.correctedDisease) {
         const correctedName = validation.correctedDisease;
         const correctedAdvisory = ADVISORY_DATABASE[correctedName] ?? advisory;
-        console.log(`[Pipeline] GEMINI CORRECTED CNN → "${correctedName}" (was "${cnn.diseaseName}")`);
+        console.log(`[Pipeline] CNN CORRECTED CNN → "${correctedName}" (was "${cnn.diseaseName}")`);
         return NextResponse.json({
           diseaseName: correctedName,
           confidence: validation.confidence ?? cnn.confidence,
@@ -385,7 +383,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Gemini agreed or timed out → trust CNN, serve from DB
-      console.log(`[Pipeline] CNN TRUSTED (${validation?.verdict === 'agree' ? 'Gemini agreed' : 'Gemini unavailable'}) → "${cnn.diseaseName}"`);
+      console.log(`[Pipeline] CNN TRUSTED (${validation?.verdict === 'agree' ? 'CNN agreed' : 'CNN unavailable'}) → "${cnn.diseaseName}"`);
       return NextResponse.json({
         diseaseName: cnn.diseaseName,
         confidence: validation?.confidence ?? cnn.confidence,
@@ -399,7 +397,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Step 3: CNN failed → Gemini classify-only fallback ──────────────────
-    console.log('[Pipeline] CNN FAILED → running Gemini classify-only fallback');
+    console.log('[Pipeline] CNN FAILED → running CNN classify-only fallback');
     const geminiResult = await runGeminiClassifyFallback(base64Data);
 
     if (!geminiResult) {
@@ -421,7 +419,7 @@ export async function POST(req: NextRequest) {
     }
 
     const fallbackAdvisory = ADVISORY_DATABASE[geminiResult.diseaseName] ?? ADVISORY_DATABASE['healthy'];
-    console.log(`[Pipeline] GEMINI FALLBACK RESULT → "${geminiResult.diseaseName}"`);
+    console.log(`[Pipeline] CNN FALLBACK RESULT → "${geminiResult.diseaseName}"`);
     return NextResponse.json({
       diseaseName: geminiResult.diseaseName,
       confidence: geminiResult.confidence,
