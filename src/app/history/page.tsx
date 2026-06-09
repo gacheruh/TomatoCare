@@ -110,15 +110,15 @@ export default function HistoryPage() {
                 {/* Filter dropdown */}
                 <div className="relative">
                     <Button
-                        variant="outline"
-                        className={`gap-2 cursor-pointer ${filterType !== 'all' ? 'border-green-500 text-green-700 bg-green-50' : ''}`}
+                        variant="secondary"
+                        className={`gap-2 cursor-pointer border-0 shadow-sm transition-all ${filterType !== 'all' ? 'text-green-700 bg-green-50 hover:bg-green-100 font-semibold' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'}`}
                         onClick={() => { setShowFilterMenu(!showFilterMenu); setShowDateMenu(false); }}
                     >
                         <Filter className="h-4 w-4" />
                         {filterType === 'all' ? t('history.filter') : filterType === 'healthy' ? t('history.healthyOnly') : t('history.diseasedOnly')}
                     </Button>
                     {showFilterMenu && (
-                        <div className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-48 py-1">
+                        <div className="absolute top-full mt-2 right-0 bg-white border-0 rounded-lg shadow-xl ring-1 ring-black/5 z-10 w-48 py-1">
                             {[
                                 { value: 'all' as FilterType, label: t('history.allResults') },
                                 { value: 'healthy' as FilterType, label: t('history.healthyOnly') },
@@ -139,22 +139,22 @@ export default function HistoryPage() {
                 {/* Date Range dropdown */}
                 <div className="relative">
                     <Button
-                        variant="outline"
-                        className={`gap-2 cursor-pointer ${dateFrom || dateTo ? 'border-green-500 text-green-700 bg-green-50' : ''}`}
+                        variant="secondary"
+                        className={`gap-2 cursor-pointer border-0 shadow-sm transition-all ${dateFrom || dateTo ? 'text-green-700 bg-green-50 hover:bg-green-100 font-semibold' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'}`}
                         onClick={() => { setShowDateMenu(!showDateMenu); setShowFilterMenu(false); }}
                     >
                         <Calendar className="h-4 w-4" />
                         {dateFrom || dateTo ? t('history.dateSet') : t('history.dateRange')}
                     </Button>
                     {showDateMenu && (
-                        <div className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-72 p-4 space-y-3">
+                        <div className="absolute top-full mt-2 right-0 bg-white border-0 rounded-lg shadow-xl ring-1 ring-black/5 z-10 w-72 p-4 space-y-3">
                             <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">{t('history.from')}</label>
                                 <input
                                     type="date"
                                     value={dateFrom}
                                     onChange={(e) => setDateFrom(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer"
+                                    className="w-full border-0 bg-gray-50 rounded-md px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm transition-all focus:bg-white cursor-pointer"
                                 />
                             </div>
                             <div>
@@ -163,14 +163,14 @@ export default function HistoryPage() {
                                     type="date"
                                     value={dateTo}
                                     onChange={(e) => setDateTo(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer"
+                                    className="w-full border-0 bg-gray-50 rounded-md px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm transition-all focus:bg-white cursor-pointer"
                                 />
                             </div>
                             <div className="flex gap-2">
                                 <Button
-                                    variant="outline"
+                                    variant="ghost"
                                     size="sm"
-                                    className="flex-1 cursor-pointer"
+                                    className="flex-1 cursor-pointer bg-gray-50 hover:bg-gray-100 border-0 text-gray-700"
                                     onClick={() => { setDateFrom(''); setDateTo(''); }}
                                 >
                                     {t('history.clear')}

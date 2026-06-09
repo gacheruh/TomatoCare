@@ -162,7 +162,7 @@ export default function DiagnosePage() {
                                 </Button>
                             </div>
                         ) : (
-                            <div className="relative rounded-lg overflow-hidden border border-gray-200">
+                            <div className="relative rounded-lg overflow-hidden border-0 shadow-sm">
                                 <img src={selectedImage} alt="Preview" className="w-full h-auto object-cover max-h-[400px]" />
                                 <button
                                     onClick={clearImage}
@@ -199,7 +199,7 @@ export default function DiagnosePage() {
                     {result ? (
                         result.isRejection ? (
                             /* ── Not a tomato leaf: amber warning card ── */
-                            <Card className="border-amber-300 bg-amber-50/50">
+                            <Card className="border-0 bg-amber-50/50 shadow-sm">
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2 text-amber-800">
                                         <AlertCircle className="h-6 w-6" />
@@ -222,7 +222,7 @@ export default function DiagnosePage() {
                             </Card>
                         ) : (
                             /* ── Valid diagnosis: green success card ── */
-                            <Card className="border-green-200 bg-green-50/50">
+                            <Card className="border-0 bg-green-50/50 shadow-sm">
                                 <CardHeader>
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="flex items-center gap-2 text-green-800">

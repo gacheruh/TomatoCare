@@ -118,7 +118,7 @@ export default function LandingPage() {
                                     <button
                                         key={i}
                                         onClick={() => setActiveFeature(i)}
-                                        className={`w-full flex items-center gap-4 p-4 rounded-xl text-left transition-all cursor-pointer ${isActive ? 'bg-gray-50 shadow-md border border-green-200' : 'hover:bg-gray-50'}`}
+                                        className={`w-full flex items-center gap-4 p-4 rounded-xl text-left transition-all cursor-pointer ${isActive ? 'bg-gray-50 shadow-md border-0 ring-2 ring-green-500/10' : 'hover:bg-gray-50'}`}
                                     >
                                         <div className={`w-10 h-10 rounded-lg ${isActive ? feature.color : feature.colorLight} flex items-center justify-center flex-shrink-0 transition-colors`}>
                                             <Icon className={`h-5 w-5 ${isActive ? 'text-white' : feature.textLight}`} />
@@ -134,7 +134,7 @@ export default function LandingPage() {
 
                         {/* Feature preview — hidden on mobile */}
                         <div className="hidden lg:block lg:col-span-3">
-                            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+                            <div className="bg-white rounded-3xl shadow-xl border-0 overflow-hidden">
                                 <div className={`h-3 ${features[activeFeature].color}`} />
                                 <div className="p-10">
                                     <div className="flex items-center gap-4 mb-8">
@@ -176,7 +176,7 @@ export default function LandingPage() {
                             { name: 'Grace Wanjiku', location: 'Kiambu, Kenya', role: 'Mixed Farmer', quote: 'The Kiswahili translation makes it so easy to use. My farmhand can now diagnose plants independently.' },
                             { name: 'Peter Otieno', location: 'Kisumu, Kenya', role: 'Smallholder Farmer', quote: 'Better than calling an agronomist. I get the same quality advice in seconds, and it is completely free.' }
                         ].map((t, i) => (
-                            <div key={i} className="bg-white rounded-2xl p-8 border border-gray-100 hover:shadow-lg transition-shadow relative">
+                            <div key={i} className="bg-white rounded-2xl p-8 border-0 shadow-sm hover:shadow-lg transition-shadow relative">
                                 <Quote className="h-8 w-8 text-green-200 mb-4" />
                                 <p className="text-gray-700 leading-relaxed mb-8 text-lg">
                                     &ldquo;{t.quote}&rdquo;

@@ -147,7 +147,7 @@ export default function SettingsPage() {
                             <select
                                 value={lang}
                                 onChange={(e) => setLang(e.target.value as 'en' | 'sw')}
-                                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 cursor-pointer"
+                                className="flex h-10 w-full rounded-md border-0 bg-gray-50 px-3 py-2 text-sm text-gray-900 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 cursor-pointer shadow-sm transition-all focus-visible:bg-white"
                             >
                                 <option value="en">English</option>
                                 <option value="sw">Kiswahili</option>
@@ -167,17 +167,17 @@ export default function SettingsPage() {
                     <CardContent className="space-y-4">
                         <div className="flex items-center justify-between">
                             <Label htmlFor="email-notifs" className="cursor-pointer">{t('settings.emailNotifs')}</Label>
-                            <input type="checkbox" id="email-notifs" className="h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500" defaultChecked />
+                            <input type="checkbox" id="email-notifs" className="h-4 w-4 text-green-600 rounded border-0 bg-gray-100 focus:ring-green-500 shadow-sm" defaultChecked />
                         </div>
                         <div className="flex items-center justify-between">
                             <Label htmlFor="push-notifs" className="cursor-pointer">{t('settings.pushNotifs')}</Label>
-                            <input type="checkbox" id="push-notifs" className="h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500" defaultChecked />
+                            <input type="checkbox" id="push-notifs" className="h-4 w-4 text-green-600 rounded border-0 bg-gray-100 focus:ring-green-500 shadow-sm" defaultChecked />
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Danger Zone */}
-                <Card className="border-red-200">
+                <Card className="border-0 bg-red-50/20 shadow-sm">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-lg text-red-600">
                             <Shield className="h-5 w-5" />
@@ -191,8 +191,8 @@ export default function SettingsPage() {
                                 <p className="text-sm text-gray-500">{t('settings.signOutDesc')}</p>
                             </div>
                             <Button
-                                variant="outline"
-                                className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                                variant="ghost"
+                                className="text-red-600 hover:bg-red-50 hover:text-red-700 border-0 shadow-sm bg-white"
                                 onClick={handleSignOut}
                             >
                                 <LogOut className="mr-2 h-4 w-4" />

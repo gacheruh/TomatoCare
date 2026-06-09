@@ -104,7 +104,7 @@ export default function FarmsPage() {
             </div>
 
             {isAdding && (
-                <Card className="border-green-200 bg-green-50/30">
+                <Card className="border-0 bg-green-50/30 shadow-sm">
                     <CardHeader>
                         <CardTitle>Add New Farm Details</CardTitle>
                     </CardHeader>

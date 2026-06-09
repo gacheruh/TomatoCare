@@ -221,36 +221,13 @@ export default function ReportPage() {
                             <CardTitle className="text-lg">{t('report.farmerNotes')}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {/* Note input */}
-                            <div className="space-y-2">
-                                <textarea
-                                    value={noteInput}
-                                    onChange={(e) => setNoteInput(e.target.value)}
-                                    placeholder={t('report.notesPlaceholder')}
-                                    className="w-full min-h-[100px] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 resize-y"
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                                            handleAddNote();
-                                        }
-                                    }}
-                                />
-                                <Button
-                                    onClick={handleAddNote}
-                                    className="w-full bg-green-600 hover:bg-green-700 gap-2"
-                                    disabled={!noteInput.trim()}
-                                >
-                                    <Save className="h-4 w-4" />
-                                    {t('report.saveNotes')}
-                                </Button>
-                            </div>
-
                             {/* Saved notes stack */}
                             {savedNotes.length > 0 && (
-                                <div className="space-y-3 pt-2 border-t border-gray-100">
+                                <div className="space-y-3">
                                     {savedNotes.map((note, index) => (
                                         <div
                                             key={`${note.timestamp}-${index}`}
-                                            className="bg-gray-50 rounded-lg p-3 border border-gray-200 group relative"
+                                            className="bg-gray-50 rounded-lg p-3 border-0 shadow-sm group relative"
                                         >
                                             <button
                                                 onClick={() => handleDeleteNote(index)}
@@ -267,6 +244,29 @@ export default function ReportPage() {
                                     ))}
                                 </div>
                             )}
+
+                            {/* Note input */}
+                            <div className={`space-y-2 ${savedNotes.length > 0 ? 'pt-4 border-t border-gray-100' : ''}`}>
+                                <textarea
+                                    value={noteInput}
+                                    onChange={(e) => setNoteInput(e.target.value)}
+                                    placeholder={t('report.notesPlaceholder')}
+                                    className="w-full min-h-[100px] rounded-md border-0 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 resize-y shadow-sm transition-all focus-visible:bg-white"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                                            handleAddNote();
+                                        }
+                                    }}
+                                />
+                                <Button
+                                    onClick={handleAddNote}
+                                    className="w-full bg-green-600 hover:bg-green-700 gap-2"
+                                    disabled={!noteInput.trim()}
+                                >
+                                    <Save className="h-4 w-4" />
+                                    {t('report.saveNotes')}
+                                </Button>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>

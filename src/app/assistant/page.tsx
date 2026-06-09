@@ -18,13 +18,13 @@ const ChatBubble = memo(function ChatBubble({ msg }: { msg: ChatMessage }) {
         <div
             className={`flex items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
         >
-            <div className={`p-2 rounded-full flex-shrink-0 ${msg.role === 'user' ? 'bg-green-600 text-white' : 'bg-white border border-gray-200 text-green-600'
+            <div className={`p-2 rounded-full flex-shrink-0 shadow-sm ${msg.role === 'user' ? 'bg-green-600 text-white' : 'bg-white text-green-600'
                 }`}>
                 {msg.role === 'user' ? <User className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
             </div>
             <div className={`p-3 rounded-2xl max-w-[80%] text-sm ${msg.role === 'user'
                 ? 'bg-green-600 text-white rounded-tr-none'
-                : 'bg-white border border-gray-200 text-gray-800 rounded-tl-none shadow-sm'
+                : 'bg-white text-gray-800 rounded-tl-none shadow-sm'
                 }`}>
                 <div className="prose prose-sm max-w-none dark:prose-invert">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -114,18 +114,18 @@ export default function AssistantPage() {
                 <p className="text-gray-500">Your personal farming expert, available 24/7.</p>
             </div>
 
-            <Card className="flex-1 flex flex-col overflow-hidden border-gray-200 shadow-sm">
+            <Card className="flex-1 flex flex-col overflow-hidden border-0 shadow-sm">
                 {/* Chat Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/55">
                     {messages.map((msg, i) => (
                         <ChatBubble key={i} msg={msg} />
                     ))}
                     {isLoading && (
                         <div className="flex items-start gap-3">
-                            <div className="p-2 rounded-full bg-white border border-gray-200 text-green-600">
+                            <div className="p-2 rounded-full bg-white text-green-600 shadow-sm">
                                 <Bot className="h-5 w-5" />
                             </div>
-                            <div className="bg-white border border-gray-200 p-3 rounded-2xl rounded-tl-none shadow-sm">
+                            <div className="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm">
                                 <div className="flex gap-1">
                                     <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
                                     <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-75"></span>
@@ -138,14 +138,14 @@ export default function AssistantPage() {
                 </div>
 
                 {/* Input Area */}
-                <div className="p-4 bg-white border-t border-gray-200">
+                <div className="p-4 bg-white border-t border-gray-100">
                     <form onSubmit={handleSend} className="flex gap-2">
                         <input
                             type="text"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             placeholder="Ask about Tomatoes, Early Blight, Late Blight..."
-                            className="flex-1 h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex-1 h-10 w-full rounded-md border-0 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm transition-all focus-visible:bg-white"
                             disabled={isLoading}
                         />
                         <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={isLoading || !input.trim()}>

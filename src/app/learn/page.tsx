@@ -192,7 +192,7 @@ export default function LearnPage() {
                     return (
                         <Card
                             key={i}
-                            className={`hover:shadow-md transition-shadow cursor-pointer text-center ${isActive ? 'border-green-500 ring-2 ring-green-200 bg-green-50' : 'hover:border-green-200'}`}
+                            className={`hover:shadow-md transition-shadow cursor-pointer text-center border-0 shadow-sm ${isActive ? 'ring-2 ring-green-200 bg-green-50/50' : 'bg-white'}`}
                             onClick={() => setActiveCategory(isActive ? null : cat.key)}
                         >
                             <CardContent className="p-6 flex flex-col items-center gap-3">
