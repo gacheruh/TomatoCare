@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { UploadCloud, Camera, Loader2, AlertCircle, CheckCircle, X, Scan, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,12 @@ export default function DiagnosePage() {
     const [result, setResult] = useState<any | null>(null);
     const [lang, setLang] = useState<'en' | 'sw'>('en');
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Pre-warm HuggingFace CNN space on page mount so it's awake by the time
+    // the user submits an image (mitigates cold-start latency).
+    useEffect(() => {
+        fetch('/api/diagnose', { method: 'GET' }).catch(() => {});
+    }, []);
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
@@ -162,7 +168,7 @@ export default function DiagnosePage() {
                                 </Button>
                             </div>
                         ) : (
-                            <div className="relative rounded-lg overflow-hidden border-0 shadow-sm">
+                            <div className="relative rounded-lg overflow-hidden border border-gray-200">
                                 <img src={selectedImage} alt="Preview" className="w-full h-auto object-cover max-h-[400px]" />
                                 <button
                                     onClick={clearImage}
@@ -199,7 +205,7 @@ export default function DiagnosePage() {
                     {result ? (
                         result.isRejection ? (
                             /* ── Not a tomato leaf: amber warning card ── */
-                            <Card className="border-0 bg-amber-50/50 shadow-sm">
+                            <Card className="border-amber-300 bg-amber-50/50">
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2 text-amber-800">
                                         <AlertCircle className="h-6 w-6" />
@@ -222,24 +228,26 @@ export default function DiagnosePage() {
                             </Card>
                         ) : (
                             /* ── Valid diagnosis: green success card ── */
-                            <Card className="border-0 bg-green-50/50 shadow-sm">
-                                <CardHeader>
-                                    <div className="flex items-center justify-between">
+                            <>
+                                {/* Language toggle */}
+                                <div className="flex justify-end">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setLang(lang === 'en' ? 'sw' : 'en')}
+                                        className="flex items-center gap-2 text-sm"
+                                    >
+                                        <Globe className="h-4 w-4" />
+                                        {lang === 'en' ? 'Swahili' : 'English'}
+                                    </Button>
+                                </div>
+                                <Card className="border-green-200 bg-green-50/50">
+                                    <CardHeader>
                                         <CardTitle className="flex items-center gap-2 text-green-800">
                                             <CheckCircle className="h-6 w-6" />
                                             {lang === 'en' ? 'Diagnosis Complete' : 'Uchunguzi Umekamilika'}
                                         </CardTitle>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setLang(lang === 'en' ? 'sw' : 'en')}
-                                            className="flex items-center gap-1.5 text-xs border-green-300 text-green-700 hover:bg-green-100"
-                                        >
-                                            <Globe className="h-3.5 w-3.5" />
-                                            {lang === 'en' ? 'Swahili' : 'English'}
-                                        </Button>
-                                    </div>
-                                </CardHeader>
+                                    </CardHeader>
                                     <CardContent className="space-y-4">
                                         <div>
                                             <h3 className="font-semibold text-gray-900">
@@ -279,6 +287,7 @@ export default function DiagnosePage() {
                                         </div>
                                     </CardContent>
                                 </Card>
+                            </>
                         )
                     ) : (
                         <Card className="h-full flex items-center justify-center min-h-[300px] bg-gray-50 border-dashed">

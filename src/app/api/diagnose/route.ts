@@ -1,64 +1,115 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { genAI, MODEL_NAMES } from '@/lib/gemini';
 
-// Local expert-validated advisory system mapping for the 10 classes
-const ADVISORY_DATABASE: Record<string, { symptoms: string, treatment: string, prevention: string }> = {
+// ─── Pre-translated advisory database (English + Swahili) ─────────────────────
+// All translations are baked in at build time — zero translation latency at runtime.
+const ADVISORY_DATABASE: Record<string, {
+  symptoms: string; treatment: string; prevention: string;
+  symptoms_sw: string; treatment_sw: string; prevention_sw: string;
+}> = {
   "Bacterial spot": {
     symptoms: "Small, water-soaked spots on leaves that turn brown or black; leaves may yellow and fall off. Fruit shows raised, scab-like spots.",
     treatment: "Apply copper-based fungicides. Prune lower branches to improve air circulation. Avoid overhead watering.",
-    prevention: "Use certified disease-free seeds, practice crop rotation, and clean tools/stakes regularly."
+    prevention: "Use certified disease-free seeds, practice crop rotation, and clean tools/stakes regularly.",
+    symptoms_sw: "Madoa madogo yenye maji kwenye majani yanayogeuka kahawia au meusi; majani yanaweza kugeuka njano na kuanguka. Tunda linaonyesha madoa yaliyoinuliwa kama ukurutu.",
+    treatment_sw: "Tumia dawa za ukungu zenye shaba. Kata matawi ya chini ili kuboresha mzunguko wa hewa. Epuka kumwagilia kutoka juu.",
+    prevention_sw: "Tumia mbegu zilizohakikishwa zisizo na magonjwa, fanya mzunguko wa mazao, na safisha zana/vigingi mara kwa mara."
   },
   "Early blight": {
     symptoms: "Dark brown spots with concentric rings ('target' appearance) on older leaves. Lower leaves yellow and drop.",
     treatment: "Apply organic copper spray or chlorothalonil. Remove infected lower leaves early in the season.",
-    prevention: "Provide proper spacing for airflow, mulch the soil to prevent spore splash-back, and rotate crops."
+    prevention: "Provide proper spacing for airflow, mulch the soil to prevent spore splash-back, and rotate crops.",
+    symptoms_sw: "Madoa ya kahawia giza yenye miduara (mwonekano wa 'shabaha') kwenye majani ya zamani. Majani ya chini hugeuka njano na kuanguka.",
+    treatment_sw: "Tumia dawa ya shaba ya kikaboni au chlorothalonil. Ondoa majani ya chini yaliyoathirika mapema msimu.",
+    prevention_sw: "Toa nafasi sahihi kwa mzunguko wa hewa, weka matandazo ya udongo kuzuia kurukaruka kwa spore, na fanya mzunguko wa mazao."
   },
   "Late blight": {
     symptoms: "Large, dark, water-soaked lesions on leaves and stems that rapidly turn black. White fungal growth appears under wet conditions.",
     treatment: "Apply copper fungicides immediately. Destroy heavily infected plants to prevent airborne spread to nearby farms.",
-    prevention: "Plant resistant varieties, avoid overhead watering, and ensure good field drainage."
+    prevention: "Plant resistant varieties, avoid overhead watering, and ensure good field drainage.",
+    symptoms_sw: "Vidonda vikubwa, vya giza, vyenye maji kwenye majani na mashina vinavyogeuka haraka kuwa meusi. Ukuaji wa ukungu mweupe huonekana katika hali ya mvua.",
+    treatment_sw: "Tumia dawa za ukungu zenye shaba mara moja. Angamiza mimea iliyoathiriwa sana kuzuia kuenea angani kwenye mashamba jirani.",
+    prevention_sw: "Panda aina zinazostahimili magonjwa, epuka kumwagilia kutoka juu, na hakikisha mifereji mizuri ya shamba."
   },
   "Leaf Mold": {
     symptoms: "Pale green or yellow spots on the upper leaf surface, with olive-green to purple velvety mold growth underneath.",
     treatment: "Apply copper fungicides or sulfur-based sprays. Increase greenhouse ventilation.",
-    prevention: "Keep humidity low (below 85%), space plants properly, and prune lower leaves to improve ventilation."
+    prevention: "Keep humidity low (below 85%), space plants properly, and prune lower leaves to improve ventilation.",
+    symptoms_sw: "Madoa ya kijani kibichi au njano kwenye uso wa juu wa jani, na ukuaji wa ukungu laini wa kijani-zeituni hadi zambarau chini.",
+    treatment_sw: "Tumia dawa za ukungu zenye shaba au dawa zenye sulfuri. Ongeza uingizaji hewa wa chafu.",
+    prevention_sw: "Weka unyevu chini (chini ya 85%), panda mimea kwa nafasi nzuri, na kata majani ya chini ili kuboresha uingizaji hewa."
   },
   "Septoria leaf spot": {
     symptoms: "Numerous small, circular spots with dark borders and grey centers. Spreads from lower leaves upwards.",
     treatment: "Apply organic copper fungicides. Remove and destroy infected leaves immediately.",
-    prevention: "Mulch around the base of the plant, water at the soil level, and keep the farm free of solanaceous weeds."
+    prevention: "Mulch around the base of the plant, water at the soil level, and keep the farm free of solanaceous weeds.",
+    symptoms_sw: "Madoa mengi madogo, ya mviringo yenye mipaka ya giza na vituo vya kijivu. Huenea kutoka majani ya chini kwenda juu.",
+    treatment_sw: "Tumia dawa za ukungu za kikaboni zenye shaba. Ondoa na angamiza majani yaliyoathiriwa mara moja.",
+    prevention_sw: "Weka matandazo karibu na msingi wa mmea, mwagilia kwa kiwango cha udongo, na weka shamba lisilo na magugu ya solanaceae."
   },
   "Spider mites Two-spotted spider mite": {
     symptoms: "Fine yellow speckling on leaves. Leaves turn bronze, dry up, and fall. Fine webbing is visible under leaves.",
     treatment: "Apply neem oil or insecticidal soap. Introduce natural predators like predatory mites.",
-    prevention: "Keep plants well-watered (mites thrive in dry conditions) and remove weeds surrounding the plot."
+    prevention: "Keep plants well-watered (mites thrive in dry conditions) and remove weeds surrounding the plot.",
+    symptoms_sw: "Madoa madogo ya njano kwenye majani. Majani yanageuka rangi ya shaba, kukauka, na kuanguka. Nyuzi nyembamba zinaonekana chini ya majani.",
+    treatment_sw: "Tumia mafuta ya neem au sabuni ya kuua wadudu. Wasilisha wawindaji wa asili kama sarafu za kuwinda.",
+    prevention_sw: "Weka mimea ikiwa na maji mengi (sarafu hustawi katika hali kame) na ondoa magugu yanayozunguka shamba."
   },
   "Target Spot": {
     symptoms: "Small, circular, dark brown spots on leaves that expand and develop concentric rings, similar to early blight but smaller.",
     treatment: "Apply systemic fungicides. Prune lower foliage to enhance airflow.",
-    prevention: "Maintain crop rotation, use clean planting material, and manage weed hosts."
+    prevention: "Maintain crop rotation, use clean planting material, and manage weed hosts.",
+    symptoms_sw: "Madoa madogo, ya mviringo, ya kahawia giza kwenye majani yanayopanuka na kukuza miduara, sawa na blight ya mapema lakini ndogo.",
+    treatment_sw: "Tumia dawa za ukungu za kimfumo. Kata majani ya chini ili kuboresha mzunguko wa hewa.",
+    prevention_sw: "Dumisha mzunguko wa mazao, tumia nyenzo safi za kupanda, na dhibiti magugu yanayohifadhi magonjwa."
   },
   "Tomato Yellow Leaf Curl Virus": {
     symptoms: "Severe stunting, leaves curling upwards and turning yellow. Plant stops growing and fruit production drops drastically.",
     treatment: "No cure for viral infection. Remove and destroy infected plants immediately to prevent spread.",
-    prevention: "Control silverleaf whitefly vector using neem oil, insect nets, and yellow sticky traps."
+    prevention: "Control silverleaf whitefly vector using neem oil, insect nets, and yellow sticky traps.",
+    symptoms_sw: "Udumavu mkubwa, majani yakijikunja juu na kugeuka njano. Mmea huacha kukua na uzalishaji wa matunda hushuka sana.",
+    treatment_sw: "Hakuna tiba ya maambukizi ya virusi. Ondoa na angamiza mimea iliyoathiriwa mara moja kuzuia kuenea.",
+    prevention_sw: "Dhibiti nzi weupe wa silverleaf kwa kutumia mafuta ya neem, nyavu za wadudu, na mitego ya njano ya kunata."
   },
   "Tomato mosaic virus": {
     symptoms: "Mottled green and yellow patterns (mosaic) on leaves. Leaves may look blistered or shoestring-like.",
     treatment: "No cure for viral infection. Promptly remove and burn/bury infected plants. Wash hands with soap after handling.",
-    prevention: "Avoid using tobacco products near plants, clean tools with disinfectant, and plant resistant tomato varieties."
+    prevention: "Avoid using tobacco products near plants, clean tools with disinfectant, and plant resistant tomato varieties.",
+    symptoms_sw: "Mifumo ya kijani na njano iliyochanganyika (mosaic) kwenye majani. Majani yanaweza kuonekana yenye malengelenge au kama uzi wa kiatu.",
+    treatment_sw: "Hakuna tiba ya maambukizi ya virusi. Ondoa haraka na choma/zika mimea iliyoathiriwa. Osha mikono kwa sabuni baada ya kushughulikia.",
+    prevention_sw: "Epuka kutumia bidhaa za tumbaku karibu na mimea, safisha zana kwa dawa ya kuua vijidudu, na panda aina za nyanya zinazostahimili magonjwa."
   },
   "healthy": {
     symptoms: "No symptoms. Foliage is green, upright, and showing robust growth.",
     treatment: "No treatment required. Maintain regular watering and nutrient feed schedules.",
-    prevention: "Continue practicing good hygiene, crop rotation, and routine monitoring."
+    prevention: "Continue practicing good hygiene, crop rotation, and routine monitoring.",
+    symptoms_sw: "Hakuna dalili. Majani ni ya kijani, imara, na yanaonyesha ukuaji thabiti.",
+    treatment_sw: "Hakuna matibabu yanayohitajika. Endelea na ratiba za kawaida za kumwagilia na kulisha virutubisho.",
+    prevention_sw: "Endelea kufanya usafi mzuri, mzunguko wa mazao, na ufuatiliaji wa kawaida."
   }
 };
 
 // Known disease classes from the CNN model
 const KNOWN_DISEASES = Object.keys(ADVISORY_DATABASE);
 
-// ─── Helper: Call the CNN backend ───────────────────────────────────────────────
+// ─── GET handler: lightweight pre-warm endpoint ────────────────────────────────
+// Called on dashboard/diagnose page mount to wake up the HuggingFace space
+// before the user even submits an image.
+export async function GET() {
+  const backendUrl = process.env.MODEL_BACKEND_URL;
+  if (!backendUrl) {
+    return NextResponse.json({ status: 'no_backend_configured' });
+  }
+
+  // Fire-and-forget ping — we don't await the result
+  fetch(backendUrl, { method: 'GET' }).catch(() => {
+    // Silently ignore — this is best-effort pre-warming only
+  });
+
+  return NextResponse.json({ status: 'warming' });
+}
+
+// ─── Helper: Call the CNN backend ─────────────────────────────────────────────
 async function callCNNBackend(base64Data: string, mimeType: string): Promise<{ diseaseName: string; confidence: number } | null> {
   const backendUrl = process.env.MODEL_BACKEND_URL;
   if (!backendUrl) return null;
@@ -89,52 +140,33 @@ async function callCNNBackend(base64Data: string, mimeType: string): Promise<{ d
   }
 }
 
-// ─── Helper: Gemini validation (silent second opinion) ──────────────────────────
+// ─── Helper: Lightweight Gemini validator (verdict + corrected disease only) ───
+// Only called when CNN confidence < 85%. Prompt is minimal so response is fast.
+// 5-second timeout — if Gemini is slow, trust the CNN result.
 interface GeminiValidation {
   verdict: 'agree' | 'corrected' | 'not_tomato';
   correctedDisease?: string;
   confidence?: number;
-  symptoms?: string;
-  treatment?: string;
-  prevention?: string;
-  symptoms_sw?: string;
-  treatment_sw?: string;
-  prevention_sw?: string;
 }
 
-async function validateWithGemini(base64Data: string, cnnPrediction?: string): Promise<GeminiValidation | null> {
-  const cnnContext = cnnPrediction
-    ? `A specialized model predicted this is: "${cnnPrediction}". Evaluate whether this prediction is correct.`
-    : `No prior prediction is available. Analyze the image from scratch.`;
+async function validateWithGemini(base64Data: string, cnnPrediction: string): Promise<GeminiValidation | null> {
+  const prompt = `You are an expert plant pathologist. A CNN model predicted this tomato leaf image is: "${cnnPrediction}".
 
-  const prompt = `You are an expert plant pathologist specializing in tomato diseases.
-
-${cnnContext}
-
-Analyze this image and respond with ONLY valid JSON (no markdown, no code fences):
+Is this prediction correct? Respond with ONLY valid JSON (no markdown, no code fences):
 {
   "verdict": "agree" | "corrected" | "not_tomato",
-  "correctedDisease": "disease name if verdict is corrected",
-  "confidence": 85,
-  "symptoms": "visible symptoms description in English",
-  "treatment": "recommended treatment in English",
-  "prevention": "prevention tips in English",
-  "symptoms_sw": "visible symptoms description in Swahili",
-  "treatment_sw": "recommended treatment in Swahili",
-  "prevention_sw": "prevention tips in Swahili"
+  "correctedDisease": "correct disease name only if verdict is corrected",
+  "confidence": 85
 }
 
 Rules:
-- If the image is NOT a tomato/plant leaf (e.g. a rock, animal, person, object, non-plant), set verdict to "not_tomato"
-- If the prediction is correct, set verdict to "agree" and STILL provide symptoms, treatment, prevention, and their Swahili translations (_sw fields)
-- If the prediction is wrong, set verdict to "corrected" and provide the correct disease name with full details in both languages
-- Known tomato diseases: ${KNOWN_DISEASES.join(', ')}
-- For healthy tomato leaves, use disease name "healthy"
-- ALL responses MUST include both English and Swahili (_sw) fields for symptoms, treatment, and prevention`;
+- If NOT a tomato/plant leaf image, set verdict to "not_tomato"
+- If CNN prediction is correct, set verdict to "agree"
+- If CNN prediction is wrong, set verdict to "corrected" and provide correctedDisease
+- Known diseases: ${KNOWN_DISEASES.join(', ')}`;
 
-  // 10-second timeout — if Gemini is slow, we'll trust the CNN
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
+  const timeout = setTimeout(() => controller.abort(), 5000);
 
   try {
     let result;
@@ -163,9 +195,7 @@ Rules:
 
     clearTimeout(timeout);
 
-    if (!result) {
-      throw lastError || new Error('All Gemini models failed validation');
-    }
+    if (!result) throw lastError || new Error('All Gemini models failed validation');
 
     const response = await result.response;
     const text = response.text();
@@ -182,6 +212,63 @@ Rules:
   }
 }
 
+// ─── Helper: Gemini classify-only fallback (when CNN is unavailable) ──────────
+// Asks Gemini to identify only the disease name, then maps it to the
+// pre-translated ADVISORY_DATABASE. No Swahili generation needed at runtime.
+async function runGeminiClassifyFallback(base64Data: string): Promise<{ diseaseName: string; confidence: number } | null> {
+  const prompt = `You are an expert plant pathologist specializing in tomato diseases.
+
+Analyze this image and identify the disease. Respond with ONLY valid JSON (no markdown, no code fences):
+{
+  "diseaseName": "exact disease name from the list below",
+  "confidence": 85
+}
+
+Known tomato diseases (use EXACTLY one of these names):
+${KNOWN_DISEASES.join('\n')}
+
+If the image is NOT a tomato/plant leaf, use diseaseName "not_tomato".
+If the plant looks healthy, use diseaseName "healthy".`;
+
+  let result;
+  let lastError;
+
+  for (const modelName of MODEL_NAMES) {
+    try {
+      console.log(`[Gemini Fallback] Trying model ${modelName}`);
+      const model = genAI.getGenerativeModel({ model: modelName });
+      result = await model.generateContent({
+        contents: [{
+          role: 'user',
+          parts: [
+            { text: prompt },
+            { inlineData: { data: base64Data, mimeType: 'image/jpeg' } }
+          ]
+        }]
+      });
+      break;
+    } catch (err: any) {
+      console.warn(`[Gemini Fallback] Model ${modelName} failed:`, err.message || err);
+      lastError = err;
+    }
+  }
+
+  if (!result) {
+    throw lastError || new Error('All Gemini models failed classification');
+  }
+
+  const response = await result.response;
+  const text = response.text();
+  const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+  try {
+    return JSON.parse(cleanText);
+  } catch {
+    console.error('[Gemini Fallback] JSON parse error:', cleanText);
+    return null;
+  }
+}
+
 // ─── Main POST handler ─────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
@@ -194,28 +281,88 @@ export async function POST(req: NextRequest) {
     const base64Data = image.split(',')[1];
     const mimeType = image.split(',')[0].split(':')[1].split(';')[0];
 
-    // ── Run CNN and Gemini in PARALLEL ──────────────────────────────────────
-    const backendUrl = process.env.MODEL_BACKEND_URL;
+    // ── Step 1: Run CNN first (sequential, not parallel) ────────────────────
+    const cnn = await callCNNBackend(base64Data, mimeType);
 
-    const [cnnResult, geminiResult] = await Promise.allSettled([
-      callCNNBackend(base64Data, mimeType),
-      // Pass CNN prediction context — but since they run in parallel, 
-      // we send a general validation prompt first time
-      backendUrl 
-        ? validateWithGemini(base64Data) // No CNN context yet (parallel)
-        : Promise.resolve(null),         // No backend configured, skip parallel Gemini
-    ]);
+    // ── Step 2: CNN succeeded ───────────────────────────────────────────────
+    if (cnn) {
+      const advisory = ADVISORY_DATABASE[cnn.diseaseName] ?? ADVISORY_DATABASE['healthy'];
 
-    const cnn = cnnResult.status === 'fulfilled' ? cnnResult.value : null;
-    const gemini = geminiResult.status === 'fulfilled' ? geminiResult.value : null;
+      // Case A: High confidence (≥ 85%) — skip Gemini entirely, serve from DB instantly
+      if (cnn.confidence >= 85) {
+        console.log(`[Pipeline] HIGH CONFIDENCE (${cnn.confidence}%) → skipping Gemini, serving DB advisory`);
+        return NextResponse.json({
+          diseaseName: cnn.diseaseName,
+          confidence: cnn.confidence,
+          symptoms: advisory.symptoms,
+          treatment: advisory.treatment,
+          prevention: advisory.prevention,
+          symptoms_sw: advisory.symptoms_sw,
+          treatment_sw: advisory.treatment_sw,
+          prevention_sw: advisory.prevention_sw,
+        });
+      }
 
-    console.log(`[Pipeline] CNN: ${cnn ? cnn.diseaseName : 'FAILED'} | Gemini: ${gemini ? gemini.verdict : 'FAILED'}`);
+      // Case B: Low confidence (< 85%) — call lightweight Gemini validator
+      console.log(`[Pipeline] LOW CONFIDENCE (${cnn.confidence}%) → calling Gemini validator`);
+      const validation = await validateWithGemini(base64Data, cnn.diseaseName);
 
-    // ── Decision Logic ──────────────────────────────────────────────────────
+      // Gemini says not a tomato leaf
+      if (validation?.verdict === 'not_tomato') {
+        console.log('[Pipeline] NOT A TOMATO LEAF (Gemini rejected)');
+        return NextResponse.json({
+          diseaseName: 'Not a Tomato Leaf',
+          confidence: 0,
+          symptoms: 'The uploaded image does not appear to be a tomato plant leaf. Please upload a clear photo of a tomato leaf for accurate diagnosis.',
+          treatment: 'N/A',
+          prevention: 'Ensure you photograph the affected tomato leaf clearly, with good lighting and minimal background clutter.',
+          symptoms_sw: 'Picha iliyopakiwa haionekani kuwa jani la mmea wa nyanya. Tafadhali pakia picha wazi ya jani la nyanya kwa uchunguzi sahihi.',
+          treatment_sw: 'Haihusiki',
+          prevention_sw: 'Hakikisha unapiga picha ya jani la nyanya lililoathirika kwa uwazi, na mwanga mzuri.',
+          isRejection: true,
+        });
+      }
 
-    // Case 1: Gemini says it's not a tomato leaf → reject immediately
-    if (gemini?.verdict === 'not_tomato') {
-      console.log('[Pipeline] Result: NOT A TOMATO LEAF (Gemini rejected)');
+      // Gemini corrected CNN → use corrected disease, map to DB
+      if (validation?.verdict === 'corrected' && validation.correctedDisease) {
+        const correctedName = validation.correctedDisease;
+        const correctedAdvisory = ADVISORY_DATABASE[correctedName] ?? advisory;
+        console.log(`[Pipeline] GEMINI CORRECTED CNN → "${correctedName}" (was "${cnn.diseaseName}")`);
+        return NextResponse.json({
+          diseaseName: correctedName,
+          confidence: validation.confidence ?? cnn.confidence,
+          symptoms: correctedAdvisory.symptoms,
+          treatment: correctedAdvisory.treatment,
+          prevention: correctedAdvisory.prevention,
+          symptoms_sw: correctedAdvisory.symptoms_sw,
+          treatment_sw: correctedAdvisory.treatment_sw,
+          prevention_sw: correctedAdvisory.prevention_sw,
+        });
+      }
+
+      // Gemini agreed or timed out → trust CNN, serve from DB
+      console.log(`[Pipeline] CNN TRUSTED (${validation?.verdict === 'agree' ? 'Gemini agreed' : 'Gemini unavailable'}) → "${cnn.diseaseName}"`);
+      return NextResponse.json({
+        diseaseName: cnn.diseaseName,
+        confidence: validation?.confidence ?? cnn.confidence,
+        symptoms: advisory.symptoms,
+        treatment: advisory.treatment,
+        prevention: advisory.prevention,
+        symptoms_sw: advisory.symptoms_sw,
+        treatment_sw: advisory.treatment_sw,
+        prevention_sw: advisory.prevention_sw,
+      });
+    }
+
+    // ── Step 3: CNN failed → Gemini classify-only fallback ──────────────────
+    console.log('[Pipeline] CNN FAILED → running Gemini classify-only fallback');
+    const geminiResult = await runGeminiClassifyFallback(base64Data);
+
+    if (!geminiResult) {
+      return NextResponse.json({ error: 'All AI models failed. Please try again.' }, { status: 500 });
+    }
+
+    if (geminiResult.diseaseName === 'not_tomato') {
       return NextResponse.json({
         diseaseName: 'Not a Tomato Leaf',
         confidence: 0,
@@ -229,66 +376,18 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Case 2: CNN succeeded
-    if (cnn) {
-      // Case 2a: Gemini agrees with CNN → use CNN + advisory database + Gemini Swahili
-      if (gemini?.verdict === 'agree') {
-        console.log(`[Pipeline] Result: CNN CONFIRMED by Gemini → "${cnn.diseaseName}"`);
-        const advisory = ADVISORY_DATABASE[cnn.diseaseName] || ADVISORY_DATABASE['healthy'];
-        return NextResponse.json({
-          diseaseName: cnn.diseaseName,
-          confidence: cnn.confidence,
-          symptoms: advisory.symptoms,
-          treatment: advisory.treatment,
-          prevention: advisory.prevention,
-          symptoms_sw: gemini.symptoms_sw || '',
-          treatment_sw: gemini.treatment_sw || '',
-          prevention_sw: gemini.prevention_sw || '',
-        });
-      }
-
-      // Case 2b: Gemini corrects CNN → use Gemini's diagnosis (both languages)
-      if (gemini?.verdict === 'corrected' && gemini.correctedDisease) {
-        console.log(`[Pipeline] Result: GEMINI CORRECTED CNN → "${gemini.correctedDisease}" (was "${cnn.diseaseName}")`);
-        const advisory = ADVISORY_DATABASE[gemini.correctedDisease];
-        return NextResponse.json({
-          diseaseName: gemini.correctedDisease,
-          confidence: gemini.confidence || cnn.confidence,
-          symptoms: advisory?.symptoms || gemini.symptoms || 'See a local agronomist for detailed symptom analysis.',
-          treatment: advisory?.treatment || gemini.treatment || 'Consult a local agricultural extension officer for treatment options.',
-          prevention: advisory?.prevention || gemini.prevention || 'Practice good crop hygiene and regular monitoring.',
-          symptoms_sw: gemini.symptoms_sw || '',
-          treatment_sw: gemini.treatment_sw || '',
-          prevention_sw: gemini.prevention_sw || '',
-        });
-      }
-
-      // Case 2c: Gemini failed or was inconclusive → trust CNN, translate advisory async
-      console.log(`[Pipeline] Result: CNN TRUSTED (Gemini unavailable) → "${cnn.diseaseName}"`);
-      const advisory = ADVISORY_DATABASE[cnn.diseaseName] || ADVISORY_DATABASE['healthy'];
-      // Try a quick Swahili translation since Gemini validation failed
-      const swahili = await translateToSwahili(advisory.symptoms, advisory.treatment, advisory.prevention);
-      return NextResponse.json({
-        diseaseName: cnn.diseaseName,
-        confidence: cnn.confidence,
-        symptoms: advisory.symptoms,
-        treatment: advisory.treatment,
-        prevention: advisory.prevention,
-        symptoms_sw: swahili?.symptoms_sw || '',
-        treatment_sw: swahili?.treatment_sw || '',
-        prevention_sw: swahili?.prevention_sw || '',
-      });
-    }
-
-    // Case 3: CNN failed but Gemini succeeded → use Gemini as full fallback
-    if (gemini) {
-      console.log(`[Pipeline] Result: GEMINI FULL FALLBACK`);
-      return await runFullGeminiFallback(base64Data);
-    }
-
-    // Case 4: Both failed → run a fresh Gemini full diagnosis as last resort
-    console.log('[Pipeline] Both CNN and parallel Gemini failed. Running fresh Gemini fallback...');
-    return await runFullGeminiFallback(base64Data);
+    const fallbackAdvisory = ADVISORY_DATABASE[geminiResult.diseaseName] ?? ADVISORY_DATABASE['healthy'];
+    console.log(`[Pipeline] GEMINI FALLBACK RESULT → "${geminiResult.diseaseName}"`);
+    return NextResponse.json({
+      diseaseName: geminiResult.diseaseName,
+      confidence: geminiResult.confidence,
+      symptoms: fallbackAdvisory.symptoms,
+      treatment: fallbackAdvisory.treatment,
+      prevention: fallbackAdvisory.prevention,
+      symptoms_sw: fallbackAdvisory.symptoms_sw,
+      treatment_sw: fallbackAdvisory.treatment_sw,
+      prevention_sw: fallbackAdvisory.prevention_sw,
+    });
 
   } catch (error: any) {
     console.error('Diagnosis API Error Details:', error);
@@ -299,89 +398,5 @@ export async function POST(req: NextRequest) {
       error: error.message || 'Internal Server Error',
       details: error.toString()
     }, { status: 500 });
-  }
-}
-
-// ─── Helper: Translate advisory text to Swahili (for CNN-only fallback) ─────
-async function translateToSwahili(symptoms: string, treatment: string, prevention: string): Promise<{ symptoms_sw: string; treatment_sw: string; prevention_sw: string } | null> {
-  try {
-    const prompt = `Translate the following agricultural advisory text to Swahili. Respond with ONLY valid JSON (no markdown, no code fences):
-{
-  "symptoms_sw": "Swahili translation of symptoms",
-  "treatment_sw": "Swahili translation of treatment",
-  "prevention_sw": "Swahili translation of prevention"
-}
-
-English text to translate:
-Symptoms: ${symptoms}
-Treatment: ${treatment}
-Prevention: ${prevention}`;
-
-    const model = genAI.getGenerativeModel({ model: MODEL_NAMES[0] });
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanText);
-  } catch (err: any) {
-    console.warn('[Translator] Swahili translation failed:', err.message || err);
-    return null;
-  }
-}
-
-// ─── Full Gemini fallback (when CNN is completely unavailable) ───────────────
-async function runFullGeminiFallback(base64Data: string): Promise<NextResponse> {
-  console.log('[Gemini Fallback] Running full diagnosis...');
-  const prompt = `
-    Analyze this plant image and identify any diseases or pests. 
-    Provide the output in the following JSON format ONLY, without markdown code blocks:
-    {
-      "diseaseName": "Name of the disease or 'Healthy'",
-      "confidence": "Confidence score as a percentage (number only)",
-      "symptoms": "Brief summary of visible symptoms in English",
-      "treatment": "Recommended chemical and organic treatments in English",
-      "prevention": "Tips to prevent future occurrence in English",
-      "symptoms_sw": "Brief summary of visible symptoms in Swahili",
-      "treatment_sw": "Recommended chemical and organic treatments in Swahili",
-      "prevention_sw": "Tips to prevent future occurrence in Swahili"
-    }
-  `;
-
-  let result;
-  let lastError;
-
-  for (const modelName of MODEL_NAMES) {
-    try {
-      console.log(`[Gemini Fallback] Trying model ${modelName}`);
-      const model = genAI.getGenerativeModel({ model: modelName });
-      result = await model.generateContent([
-        prompt,
-        {
-          inlineData: {
-            data: base64Data,
-            mimeType: 'image/jpeg',
-          },
-        },
-      ]);
-      break;
-    } catch (err: any) {
-      console.warn(`[Gemini Fallback] Model ${modelName} failed:`, err.message || err);
-      lastError = err;
-    }
-  }
-
-  if (!result) {
-    throw lastError || new Error('All generative models failed');
-  }
-
-  const response = await result.response;
-  const text = response.text();
-  const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-  try {
-    const jsonResponse = JSON.parse(cleanText);
-    return NextResponse.json(jsonResponse);
-  } catch (parseError) {
-    console.error('JSON Parse Error:', parseError);
-    return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 });
   }
 }
