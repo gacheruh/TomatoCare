@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, Leaf, LogOut, User, LayoutDashboard } from 'lucide-react';
+import { Menu, LogOut, User, LayoutDashboard } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -69,9 +69,7 @@ export default function Navbar({ toggleSidebar }: { toggleSidebar: () => void })
                         <Menu className="h-6 w-6" />
                     </button>
                     <Link href="/" className="flex items-center gap-2">
-                        <div className="bg-green-600 p-1.5 rounded-lg">
-                            <Leaf className="h-6 w-6 text-white" />
-                        </div>
+                        <img src="/logo.png" alt="TomatoCare Logo" className="h-9 w-9 object-contain" />
                         <span className="text-xl font-bold text-gray-900 tracking-tight">{t('brand.name')}</span>
                     </Link>
                 </div>

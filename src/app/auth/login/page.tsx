@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Leaf, Loader2, Mail, Lock } from 'lucide-react';
+import { Loader2, Mail, Lock } from 'lucide-react';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -41,9 +41,7 @@ export default function LoginPage() {
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
                 <div className="text-center">
-                    <div className="bg-green-600 p-2 rounded-lg inline-flex mb-4">
-                        <Leaf className="h-8 w-8 text-white" />
-                    </div>
+                    <img src="/logo.png" alt="TomatoCare Logo" className="h-16 w-16 mx-auto mb-4 object-contain" />
                     <h2 className="text-3xl font-bold text-gray-900">Welcome back</h2>
                     <p className="mt-2 text-gray-600">Sign in to your TomatoCare account</p>
                 </div>

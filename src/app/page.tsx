@@ -199,8 +199,8 @@ export default function LandingPage() {
             <section className="py-28 bg-white">
                 <div className="container px-4 md:px-6 mx-auto text-center">
                     <div className="max-w-3xl mx-auto space-y-8">
-                        <div className="w-20 h-20 bg-green-100 rounded-3xl flex items-center justify-center mx-auto">
-                            <Leaf className="h-10 w-10 text-green-600" />
+                        <div className="w-20 h-20 bg-green-50 rounded-3xl flex items-center justify-center mx-auto">
+                            <img src="/logo.png" alt="TomatoCare Logo" className="h-14 w-14 object-contain" />
                         </div>
                         <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
                             Your crops can&apos;t wait.
@@ -223,7 +223,7 @@ export default function LandingPage() {
             <footer className="bg-white border-t border-gray-200 py-12">
                 <div className="container px-4 md:px-6 mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-2">
-                        <div className="bg-green-600 p-1.5 rounded-lg"><Leaf className="h-5 w-5 text-white" /></div>
+                        <img src="/logo.png" alt="TomatoCare Logo" className="h-8 w-8 object-contain" />
                         <span className="text-lg font-bold text-gray-900">TomatoCare</span>
                     </div>
                     <p className="text-sm text-gray-500">© {new Date().getFullYear()} TomatoCare. All rights reserved.</p>
