@@ -92,10 +92,17 @@ const ADVISORY_DATABASE: Record<string, {
 // Known disease classes from the CNN model
 const KNOWN_DISEASES = Object.keys(ADVISORY_DATABASE);
 
+// Toggle: set to true to bypass the CNN model and use Gemini directly for all diagnoses
+const USE_GEM_ONLY = true;
+
 // ─── GET handler: lightweight pre-warm endpoint ────────────────────────────────
 // Called on dashboard/diagnose page mount to wake up the HuggingFace space
 // before the user even submits an image.
 export async function GET() {
+  if (USE_GEM_ONLY) {
+    return NextResponse.json({ status: 'gem only' });
+  }
+
   const backendUrl = process.env.MODEL_BACKEND_URL;
   if (!backendUrl) {
     return NextResponse.json({ status: 'no_backend_configured' });
@@ -280,6 +287,43 @@ export async function POST(req: NextRequest) {
 
     const base64Data = image.split(',')[1];
     const mimeType = image.split(',')[0].split(':')[1].split(';')[0];
+
+    // ── Optional Bypass: Use Gemini-only mode directly ──────────────────────
+    if (USE_GEM_ONLY) {
+      console.log('[Pipeline] USE_GEM_ONLY is active → skipping CNN, calling Gemini directly');
+      const geminiResult = await runGeminiClassifyFallback(base64Data);
+
+      if (!geminiResult) {
+        return NextResponse.json({ error: 'Gemini classification failed. Please try again.' }, { status: 500 });
+      }
+
+      if (geminiResult.diseaseName === 'not_tomato') {
+        return NextResponse.json({
+          diseaseName: 'Not a Tomato Leaf',
+          confidence: 0,
+          symptoms: 'The uploaded image does not appear to be a tomato plant leaf. Please upload a clear photo of a tomato leaf for accurate diagnosis.',
+          treatment: 'N/A',
+          prevention: 'Ensure you photograph the affected tomato leaf clearly, with good lighting and minimal background clutter.',
+          symptoms_sw: 'Picha iliyopakiwa haionekani kuwa jani la mmea wa nyanya. Tafadhali pakia picha wazi ya jani la nyanya kwa uchunguzi sahihi.',
+          treatment_sw: 'Haihusiki',
+          prevention_sw: 'Hakikisha unapiga picha ya jani la nyanya lililoathirika kwa uwazi, na mwanga mzuri.',
+          isRejection: true,
+        });
+      }
+
+      const fallbackAdvisory = ADVISORY_DATABASE[geminiResult.diseaseName] ?? ADVISORY_DATABASE['healthy'];
+      console.log(`[Pipeline] GEMINI ONLY RESULT → "${geminiResult.diseaseName}"`);
+      return NextResponse.json({
+        diseaseName: geminiResult.diseaseName,
+        confidence: geminiResult.confidence,
+        symptoms: fallbackAdvisory.symptoms,
+        treatment: fallbackAdvisory.treatment,
+        prevention: fallbackAdvisory.prevention,
+        symptoms_sw: fallbackAdvisory.symptoms_sw,
+        treatment_sw: fallbackAdvisory.treatment_sw,
+        prevention_sw: fallbackAdvisory.prevention_sw,
+      });
+    }
 
     // ── Step 1: Run CNN first (sequential, not parallel) ────────────────────
     const cnn = await callCNNBackend(base64Data, mimeType);

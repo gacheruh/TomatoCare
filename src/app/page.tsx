@@ -9,7 +9,7 @@ export default function LandingPage() {
     const [activeFeature, setActiveFeature] = useState(0);
 
     const features = [
-        { icon: Camera, title: 'AI Diagnosis', desc: 'Upload any plant photo and get an instant disease identification powered by Google Gemini AI.', color: 'bg-green-500', colorLight: 'bg-green-100', textLight: 'text-green-600' },
+        { icon: Camera, title: 'AI Diagnosis', desc: 'Upload any plant photo and get an instant disease identification powered by AI.', color: 'bg-green-500', colorLight: 'bg-green-100', textLight: 'text-green-600' },
         { icon: FileText, title: 'Detailed Reports', desc: 'Get comprehensive reports with symptoms, treatments (organic & chemical), and prevention tips.', color: 'bg-blue-500', colorLight: 'bg-blue-100', textLight: 'text-blue-600' },
         { icon: MessageSquare, title: 'AI Assistant', desc: 'Chat with our AI agronomist 24/7. Ask questions about pests, soil health, or farming techniques.', color: 'bg-purple-500', colorLight: 'bg-purple-100', textLight: 'text-purple-600' },
         { icon: Globe, title: 'Kiswahili Support', desc: 'Switch the entire app to Kiswahili instantly. Built for East African farmers from the ground up.', color: 'bg-orange-500', colorLight: 'bg-orange-100', textLight: 'text-orange-600' },
@@ -40,8 +40,7 @@ export default function LandingPage() {
                         </h1>
 
                         <p className="text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
-                            TomatoCare combines Gemini AI with agricultural science to give every farmer access to
-                            instant, expert-level plant disease diagnosis — completely free.
+                            TomatoCare uses advanced computer vision to identify crop problems at first sight, giving every farmer access to instant, expert-level plant health reports — completely free.
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
@@ -78,7 +77,7 @@ export default function LandingPage() {
 
                         {[
                             { step: '01', title: 'Upload a Photo', desc: 'Take a photo of the affected plant leaf with your phone camera, or upload an existing image. Our system accepts any common image format.', icon: Camera, color: 'green' },
-                            { step: '02', title: 'AI Analysis', desc: 'Google Gemini AI analyzes the leaf pattern, discoloration, and markings to identify the specific disease or pest causing damage.', icon: Cpu, color: 'blue' },
+                            { step: '02', title: 'AI Analysis', desc: 'The CNN model analyzes the leaf pattern, discoloration, and markings to identify the specific disease or pest causing damage.', icon: Cpu, color: 'blue' },
                             { step: '03', title: 'Get Your Report', desc: 'Receive a complete diagnosis with disease name, confidence score, symptoms, recommended treatments, and prevention strategies.', icon: Leaf, color: 'yellow' },
                         ].map((item, i) => {
                             const Icon = item.icon;
