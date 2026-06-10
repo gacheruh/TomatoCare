@@ -288,7 +288,7 @@ export async function POST(req: NextRequest) {
 
     // ── Optional Bypass: Use Gemini-only mode directly ──────────────────────
     if (USE_GEM_ONLY) {
-      console.log('[Pipeline] USE_GEM_ONLY is active → skipping CNN, calling CNN directly');
+      console.log('[Pipeline] calling CNN');
       const geminiResult = await runGeminiClassifyFallback(base64Data);
 
       if (!geminiResult) {
